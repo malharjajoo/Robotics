@@ -23,7 +23,8 @@ motorParams.pidParameters.k_d = 0.0
 interface.setMotorAngleControllerParameters(motors[0],motorParams)
 interface.setMotorAngleControllerParameters(motors[1],motorParams)
 
-interface.startLogging("/home/pi/BrickPi/log0.txt")
+# write to log0.txt before tuning, log1.txt after tuning
+interface.startLogging("/home/pi/BrickPi/log1.txt")
 
 while True:
 	angle = float(input("Enter a angle to rotate (in radians): "))
