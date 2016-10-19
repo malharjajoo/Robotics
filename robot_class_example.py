@@ -4,13 +4,16 @@
 import brickpi
 import time
 
-interface = None;
+interface = brickpi.Interface();
+
 robot = None;
 
 class Robot:
 	# attributes - ideally different components (motors, ultrasonic sensor, etc)
 	motors = [0,1]
 	
+	
+
 	# constructor
 	def __init__(self):
 		global interface
@@ -36,6 +39,20 @@ class Robot:
 	def moveForward(self, distance):
 		# implementation
 
+		while True:
+			angle = float(distToAngle(self, distance))
+
+			interface.increaseMotorAngleReferences(motors,[angle,angle])
+
+			while not interface.motorAngleReferencesReached(motors) :
+				motorAngles = interface.getMotorAngles(motors)
+				if motorAngles :
+					print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
+				time.sleep(0.1)
+
+			print "Destination reached!"
+
+
 	def moveBackwards(self, distance):
 		# implementation
 
@@ -48,6 +65,9 @@ class Robot:
 	# other member functions here...
 
 # End of Robot Class
+
+def distToAngle():
+#implementaion
 
 # main
 
