@@ -27,6 +27,7 @@ class Robot:
 		interface.setMotorAngleControllerParameters(self.motors[1],motorParams)	
 
 
+	# movement functions
 	def moveForwards(self, distance):
 		angle = self.distToAngle(distance)
 
@@ -38,20 +39,22 @@ class Robot:
 				print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
 
 	def moveBackwards(self, distance):
-			self.moveForwards(-distance)
+		self.moveForwards(-distance)
 
 	def rotateRight(self, rotAngle):
-			angle = self.rotAngleToMotorAngle(rotAngle)
-			interface.increaseMotorAngleReferences(self.motors,[angle,-angle])
+		angle = self.rotAngleToMotorAngle(rotAngle)
+		interface.increaseMotorAngleReferences(self.motors,[angle,-angle])
 
-			while not interface.motorAngleReferencesReached(self.motors) :
-				motorAngles = interface.getMotorAngles(self.motors)
-				if motorAngles :
-					print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
+		while not interface.motorAngleReferencesReached(self.motors) :
+			motorAngles = interface.getMotorAngles(self.motors)
+			if motorAngles :
+				print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
 		
 	def rotateLeft(self, angle):
 		self.rotateRight(-angle)
 
+
+	# conversion functions
 	def distToAngle(self, dist):
 		angle = float(dist * 15.0)/42.0 
 		return angle
@@ -59,15 +62,23 @@ class Robot:
 	def rotAngleToMotorAngle(self, rotationAngle):
 		return float(rotationAngle * 4.6) / 90.0
 		
-	# other member functions here...
-	def moveSquare(self,distance):
-		for i in range(0,4):
-			self.moveForwards(distance)
-			self.rotateLeft(90)
-			time.sleep(0.05)
+
+	# other member functions
+	def Left90deg(self):
+		self.rotateLeft(90)
 		
+	def Right90deg(self):
+		self.rotateRight(90)
+
+	def moveSquare(self,distance):
+	for i in range(0,4):
+		self.moveForwards(distance)
+		Left90deg()
+		time.sleep(0.05)
+	
 	#def check_drift():
 		
+	# destructor
 	def __del__(self):
 		interface.terminate()
 
