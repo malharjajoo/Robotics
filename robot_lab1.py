@@ -71,10 +71,10 @@ class Robot:
 		self.rotateRight(90)
 
 	def moveSquare(self,distance):
-	for i in range(0,4):
-		self.moveForwards(distance)
-		Left90deg()
-		time.sleep(0.05)
+		for i in range(0,4):
+			self.moveForwards(distance)
+			Left90deg()
+			time.sleep(0.05)
 	
 	#def check_drift():
 		
