@@ -1,20 +1,25 @@
 import brickpi
 import time
+#from enum import Enum
 
 interface = None
+
+#class State(Enum):
+	
 
 class Robot:
 	# attributes - ideally different components (motors, ultrasonic sensor, etc)
 	motors = [0,1]
-	
-	
+	speed=6.0
+	touch_ports = [2,3]
 	def __init__(self):
 		global interface
 		interface = brickpi.Interface()
 		interface.initialize()
 		interface.motorEnable(self.motors[0])
 		interface.motorEnable(self.motors[1])
-
+		interface.sensorEnable(self.touch_ports[0], brickpi.SensorType.SENSOR_TOUCH)
+		interface.sensorEnable(self.touch_ports[1], brickpi.SensorType.SENSOR_TOUCH)
 		motorParams = interface.MotorAngleControllerParameters()
 		motorParams.maxRotationAcceleration = 6.0
 		motorParams.maxRotationSpeed = 12.0
@@ -31,18 +36,44 @@ class Robot:
 
 
 	# movement functions
-	def moveForwards(self, distance):
-		angle = self.distToAngle(distance)
+	def setSpeed(self, newSpeed):
+		 self.speed = newSpeed
 
-		interface.increaseMotorAngleReferences(self.motors,[angle,angle])
+	def moveForwards(self, distance=-1):
+		if distance<0:
+			while True:
+				if self.checkSensors(self.touch_ports[0]) or self.checkSensors(self.touch_ports[1]):
+					break
+				else:
+					interface.setMotorRotationSpeedReferences(self.motors, [self.speed,self.speed])
+		else:
+			angle = self.distToAngle(distance)
 
-		while not interface.motorAngleReferencesReached(self.motors) :
-			motorAngles = interface.getMotorAngles(self.motors)
-			if motorAngles :
-				print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
+			interface.increaseMotorAngleReferences(self.motors,[angle,angle])
 
-	def moveBackwards(self, distance):
-		self.moveForwards(-distance)
+			while not interface.motorAngleReferencesReached(self.motors) :
+				if self.checkSensors(self.touch_ports[0]) or self.checkSensors(self.touch_ports[1]):
+					break
+				else:
+					motorAngles = interface.getMotorAngles(self.motors)
+					if motorAngles :
+						print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
+
+	def moveBackwards(self, distance=-1):
+		if distance<0:
+			while True:
+				interface.setMotorRotationSpeedReferences(self.motors, [-self.speed,-self.speed])
+				
+		else:
+			angle = self.distToAngle(-distance)
+
+			interface.increaseMotorAngleReferences(self.motors,[angle,angle])
+
+			while not interface.motorAngleReferencesReached(self.motors):
+				motorAngles = interface.getMotorAngles(self.motors)
+				if motorAngles :
+					print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
+
 
 	def rotateRight(self, rotAngle):
 		angle = self.rotAngleToMotorAngle(rotAngle)
@@ -81,6 +112,15 @@ class Robot:
 			self.Left90deg()
 			time.sleep(0.05)
 	
+	def checkSensors(self, touch_port):
+		result=interface.getSensorValue(touch_port)
+		if result:
+			touched=result[0]
+		else:
+			touched=0
+
+		return touched
+
 	#def check_drift():
 		
 	# destructor
@@ -92,11 +132,6 @@ class Robot:
 # main
 
 robot = Robot()
-robot.moveSquare(40)
-#robot.moveForwards(40)
-#robot.Left90deg()
-#robot.Left90deg()
-#robot.Left90deg()
-#robot.Left90deg()
+robot.setSpeed(10)
+robot.moveForwards()
 interface.terminate()
-
