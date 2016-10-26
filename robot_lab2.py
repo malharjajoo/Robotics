@@ -10,7 +10,7 @@ interface = None
 class Robot:
 	# attributes - ideally different components (motors, ultrasonic sensor, etc)
 	motors = [0,1]
-	speed=6.0
+	
 	touch_ports = [2,3]
 	def __init__(self):
 		global interface
@@ -27,25 +27,52 @@ class Robot:
 		motorParams.minPWM = 18.0
 		motorParams.pidParameters.minOutput = -255
 		motorParams.pidParameters.maxOutput = 255
-		motorParams.pidParameters.k_p = 517
+		motorParams.pidParameters.k_p = 800
 		motorParams.pidParameters.k_i = 1000
 		motorParams.pidParameters.k_d = 13
 
 		interface.setMotorAngleControllerParameters(self.motors[0],motorParams)
 		interface.setMotorAngleControllerParameters(self.motors[1],motorParams)	
-
+		self.speed = 6.0
 
 	# movement functions
 	def setSpeed(self, newSpeed):
 		 self.speed = newSpeed
 
+	def reverseForkLeft(self,angle):
+		interface.setMotorRotationSpeedReferences(self.motors, [0,0])
+		self.moveBackwards(20)
+		self.rotateLeft(angle)
+		
+			
+	def reverseForkRight(self,angle):
+                interface.setMotorRotationSpeedReferences(self.motors, [0,0])
+		self.moveBackwards(20)
+                self.rotateRight(angle)
+
+
 	def moveForwards(self, distance=-1):
 		if distance<0:
+
+		
+		
 			while True:
-				if self.checkSensors(self.touch_ports[0]) or self.checkSensors(self.touch_ports[1]):
-					break
-				else:
+				interface.setMotorRotationSpeedReferences(self.motors, [self.speed,self.speed])
+
+				if self.checkSensors(self.touch_ports[0]) and not  self.checkSensors(self.touch_ports[1]):	
+					self.reverseForkRight(45)
 					interface.setMotorRotationSpeedReferences(self.motors, [self.speed,self.speed])
+				
+
+				elif not self.checkSensors(self.touch_ports[0]) and self.checkSensors(self.touch_ports[1]):
+					self.reverseForkLeft(45)				
+					interface.setMotorRotationSpeedReferences(self.motors, [self.speed,self.speed])
+
+
+				elif self.checkSensors(self.touch_ports[0]) and  self.checkSensors(self.touch_ports[1]):
+					self.reverseForkLeft(90)
+					interface.setMotorRotationSpeedReferences(self.motors, [self.speed,self.speed])
+				
 		else:
 			angle = self.distToAngle(distance)
 
@@ -63,8 +90,8 @@ class Robot:
 		if distance<0:
 			while True:
 				interface.setMotorRotationSpeedReferences(self.motors, [-self.speed,-self.speed])
-				
-		else:
+ 				
+  		else:
 			angle = self.distToAngle(-distance)
 
 			interface.increaseMotorAngleReferences(self.motors,[angle,angle])
@@ -132,6 +159,6 @@ class Robot:
 # main
 
 robot = Robot()
-robot.setSpeed(10)
+robot.setSpeed(6)
 robot.moveForwards()
 interface.terminate()
