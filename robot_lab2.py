@@ -178,12 +178,13 @@ class Robot:
 
 # main
 robot = Robot()
-interface.startLogging("/home/pi/BrickPi/log3.txt")
-
 #robot.moveForwards()
 #robot.moveSquare(10)
 robot.moveForwards(50)
-interface.stopLogging()
 time.sleep(2)
+
+interface.startLogging("/home/pi/BrickPi/log3.txt")
+
 robot.moveForwards()
+interface.stopLogging()
 interface.terminate()
