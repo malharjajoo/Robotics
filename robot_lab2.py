@@ -135,7 +135,7 @@ class Robot:
 		motorParams.minPWM = 18.0
 		motorParams.pidParameters.minOutput = -255
 		motorParams.pidParameters.maxOutput = 25
-		motorParams.pidParameters.k_p = 100
+		motorParams.pidParameters.k_p = 500
 		motorParams.pidParameters.k_i = 0
 		motorParams.pidParameters.k_d = 0
 		interface.setMotorAngleControllerParameters(self.motors[0],motorParams)
