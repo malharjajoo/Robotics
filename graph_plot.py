@@ -4,7 +4,7 @@ import re
 # regex: ([0-9.]+)\t([0-9.]+)\t([0-9.]+)\t([0-9.]+)\t([0-9.]+)
 # use matching groups
 
-logFile = open('log2.txt', 'r')
+logFile = open('log3.txt', 'r')
 contents = logFile.read()
 
 # process log file with regex
