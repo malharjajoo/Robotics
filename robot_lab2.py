@@ -198,10 +198,7 @@ class Robot:
 			usReading = self.readUsSensor()	#returns the median of the circular buffer
 			error = usReading - safeDistance
 			k = float(error)/30.0	#k gain - adjust for different smoothness
-			if k > 1:
-				k = 1
-			if k < -1:
-				k = -1
+			k = max(-1, min(k,1))
 			self.setMotorRotationSpeed(k*self.speed, k*self.speed)
 
 		'''
@@ -256,7 +253,6 @@ class Robot:
 		threshold = 40
 		bufferSize = 5
 		speedConstant = 12.0
-		
 		circularBuffer = CircularBuffer.CircularBuffer(bufferSize)
 
 		# this is to fill the buffer with intial values so that median can be calculated correctly later
@@ -302,30 +298,12 @@ class Robot:
 			else:
 				print "failed usRading"
 
-			
-
-
-				
-	
-		
-	# destructor
-#	def __del__(self):
-	#	interface.terminate()
 
 # End of Robot Class
 
 # main
 robot = Robot()
-#robot.moveSquare(10)
-#robot.moveForwards(50)
-#time.sleep(2)
-#robot.rotateRight(90)
-#interface.startLogging("/home/pi/BrickPi/log3.txt")
-#robot.moveBackwards(100)
-#robot.moveForwards(20)
-#robot.moveForwards()
-#robot.reverseForkLeft(360)
-#robot.MoveForwardsWithSonar()
-robot.followWallWithSonar()
-#interface.stopLogging()
+robot.MoveForwardsWithSonar(30)
+#robot.followWallWithSonar()
 interface.terminate()
+#END
