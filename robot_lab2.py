@@ -256,7 +256,7 @@ class Robot:
 		threshold = 40
 		bufferSize = 5
 		speedConstant = 12.0
-		'''
+		
 		circularBuffer = CircularBuffer.CircularBuffer(bufferSize)
 
 		# this is to fill the buffer with intial values so that median can be calculated correctly later
