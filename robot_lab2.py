@@ -306,3 +306,4 @@ robot = Robot()
 robot.MoveForwardsWithSonar(30)
 #robot.followWallWithSonar()
 interface.terminate()
+#END
