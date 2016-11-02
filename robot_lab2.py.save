@@ -160,9 +160,9 @@ class Robot:
 		motorParams.pidParameters.minOutput = -255
 		motorParams.pidParameters.maxOutput = 255
 		#517 , 1000,13		
-		motorParams.pidParameters.k_p = 517
-		motorParams.pidParameters.k_i = 1000
-		motorParams.pidParameters.k_d = 13
+		motorParams.pidParameters.k_p = 600
+		motorParams.pidParameters.k_i = 60
+		motorParams.pidParameters.k_d = 10
 		interface.setMotorAngleControllerParameters(self.motors[0],motorParams)
 		interface.setMotorAngleControllerParameters(self.motors[1],motorParams)
 
@@ -202,13 +202,14 @@ class Robot:
 
 # main
 robot = Robot()
+robot.rotateRight(90)
 #robot.moveSquare(10)
 #robot.moveForwards(50)
 #time.sleep(2)
-#robot.rotateRight(90)
+
 #interface.startLogging("/home/pi/BrickPi/log3.txt")
 #robot.moveBackwards(100)
-robot.moveForwards(20)
+#robot.moveForwards(40)
 robot.moveForwards()
 #robot.reverseForkLeft(360)
 #interface.stopLogging()
