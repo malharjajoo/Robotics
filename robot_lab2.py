@@ -10,8 +10,9 @@ interface = None
 class Robot:
 	# attributes - ideally different components (motors, ultrasonic sensor, etc)
 	motors = [0,1]
-	speed = 6.0
-	touch_ports = [2,3]
+	speed = 8.0
+	touch_ports = [0,1]
+	sonar_port = 2
 	def __init__(self):
 		global interface
 		interface = brickpi.Interface()
@@ -20,17 +21,18 @@ class Robot:
 		interface.motorEnable(self.motors[1])
 		interface.sensorEnable(self.touch_ports[0], brickpi.SensorType.SENSOR_TOUCH)
 		interface.sensorEnable(self.touch_ports[1], brickpi.SensorType.SENSOR_TOUCH)
+		interface.sensorEnable(self.sonar_port, brickpi.SensorType.SENSOR_ULTRASONIC)
 		motorParams = interface.MotorAngleControllerParameters()
 		motorParams.maxRotationAcceleration = 6.0
 		motorParams.maxRotationSpeed = 12.0
 		motorParams.feedForwardGain = 255/20.0
-		motorParams.minPWM = 18.0
+		motorParams.minPWM = 6.0
 		motorParams.pidParameters.minOutput = -255
 		motorParams.pidParameters.maxOutput = 255
 		#position ctrl: 517, 1000, 13
 		#velocity ctrl: 100, 0, 0
-		motorParams.pidParameters.k_p = 517
-		motorParams.pidParameters.k_i = 1000
+		motorParams.pidParameters.k_p = 217
+		motorParams.pidParameters.k_i = 100
 		motorParams.pidParameters.k_d = 13
 
 		interface.setMotorAngleControllerParameters(self.motors[0],motorParams)
@@ -41,13 +43,15 @@ class Robot:
 		 self.speed = newSpeed
 
 	def reverseForkLeft(self,angle):
-		interface.setMotorRotationSpeedReferences(self.motors, [0,0])
+		interface.setMotorPwm(self.motors[0],0)
+		interface.setMotorPwm(self.motors[1],0)
 		self.moveBackwards(20)
 		self.rotateLeft(angle)
 		
 			
 	def reverseForkRight(self,angle):
-                interface.setMotorRotationSpeedReferences(self.motors, [0,0])
+		interface.setMotorPwm(self.motors[0],0)
+		interface.setMotorPwm(self.motors[1],0)
 		self.moveBackwards(20)
                 self.rotateRight(angle)
 
@@ -58,12 +62,12 @@ class Robot:
 			while True:
 
 				if self.checkSensors(self.touch_ports[0]) and not  self.checkSensors(self.touch_ports[1]):	
-					self.reverseForkRight(45)
+					self.reverseForkRight(90)
 					self.setMotorRotationSpeed(self.speed, self.speed)
 				
 
 				elif not self.checkSensors(self.touch_ports[0]) and self.checkSensors(self.touch_ports[1]):
-					self.reverseForkLeft(45)				
+					self.reverseForkLeft(90)				
 					self.setMotorRotationSpeed(self.speed, self.speed)
 
 
@@ -77,7 +81,7 @@ class Robot:
 
 	def moveBackwards(self, distance=-1):
 		if distance<0:
-			interface.setMotorRotationSpeedReferences(self.motors, [-self.speed,-self.speed])
+			self.setMotorRotationSpeed(-self.speed, -self.speed)
  			while True:
 				# sensor checks here
 				time.sleep(1)	
@@ -135,8 +139,8 @@ class Robot:
 		motorParams.minPWM = 18.0
 		motorParams.pidParameters.minOutput = -255
 		motorParams.pidParameters.maxOutput = 25
-		motorParams.pidParameters.k_p = 500
-		motorParams.pidParameters.k_i = 1000
+		motorParams.pidParameters.k_p = 317
+		motorParams.pidParameters.k_i = 100
 		motorParams.pidParameters.k_d = 13
 		interface.setMotorAngleControllerParameters(self.motors[0],motorParams)
 		interface.setMotorAngleControllerParameters(self.motors[1],motorParams)
@@ -151,8 +155,9 @@ class Robot:
 		motorParams.feedForwardGain = 255/20.0
 		motorParams.minPWM = 18.0
 		motorParams.pidParameters.minOutput = -255
-		motorParams.pidParameters.maxOutput = 25		
-		motorParams.pidParameters.k_p = 517
+		motorParams.pidParameters.maxOutput = 25
+		#517 , 1000,13		
+		motorParams.pidParameters.k_p = 817
 		motorParams.pidParameters.k_i = 1000
 		motorParams.pidParameters.k_d = 13
 		interface.setMotorAngleControllerParameters(self.motors[0],motorParams)
@@ -167,7 +172,23 @@ class Robot:
 				motorAngles = interface.getMotorAngles(self.motors)
 				if motorAngles :
 					print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
-
+	def MoveForwardsWithSonar(self):
+		while True:
+			usReading = interface.getSensorValue(self.sonar_port)
+			if usReading:
+				print usReading
+			else:
+				print "Failed US Reading"
+				usREading = 30;
+			error = usReading - 30
+			if error < 0:
+				error = 0;
+			k = float(error)/30.0
+			if k > 1:
+				k = 1
+			if usReading:
+				self.setMotorRotationSpeed(self.speed*k, self.speed*k)
+				
 	
 		
 	# destructor
@@ -178,13 +199,17 @@ class Robot:
 
 # main
 robot = Robot()
+#robot.rotateRight
 #robot.moveForwards()
 #robot.moveSquare(10)
 #robot.moveForwards(50)
 #time.sleep(2)
 
-interface.startLogging("/home/pi/BrickPi/log3.txt")
+#interface.startLogging("/home/pi/BrickPi/log3.txt")
+#robot.moveBackwards(100)
+robot.moveForwards(50)
 
-robot.moveForwards()
-interface.stopLogging()
+#robot.moveForwards()
+#robot.reverseForkLeft(360)
+#interface.stopLogging()
 interface.terminate()
