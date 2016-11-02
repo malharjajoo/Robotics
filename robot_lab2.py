@@ -1,6 +1,7 @@
 import brickpi
 import time
 #from enum import Enum
+import CircularBuffer
 
 interface = None
 
@@ -12,7 +13,7 @@ class Robot:
 	motors = [0,1]
 	speed = 6.0
 	touch_ports = [0,1]
-	sonar_port = 2
+	sonar_port = 3
 	def __init__(self):
 		global interface
 		interface = brickpi.Interface()
@@ -175,22 +176,109 @@ class Robot:
 				motorAngles = interface.getMotorAngles(self.motors)
 				if motorAngles :
 					print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
-	def MoveForwardsWithSonar(self):
-		while True:
-			usReading = interface.getSensorValue(self.sonar_port)
-			if usReading:
-				print usReading
+
+	#works for following left wall
+	def followWallWithSonar(self):
+		threshold = 40
+                bufferSize = 5
+		speedConstant = 12.0
+
+                circularBuffer = CircularBuffer.CircularBuffer(bufferSize)
+
+                # this is to fill the buffer with intial values so that median can be calculated correctly later
+                for i in range(bufferSize):
+
+                        usReading = interface.getSensorValue(self.sonar_port)
+
+                        if(usReading):
+                                circularBuffer.add(usReading[0])
+                                print circularBuffer.circularBuffer
+
+
+
+
+                while True:
+                        usReading = interface.getSensorValue(self.sonar_port)
+
+                        if usReading:
+
+
+                                # imp - this threshold will need to be changed if the 
+                                #       speed is too high 
+
+
+                                median = circularBuffer.getMedian()
+                                circularBuffer.add(usReading[0])
+
+                                if((usReading[0] < median + threshold) and (usReading[0] > median - threshold) ):
+
+                                        error = usReading[0] - 30
+
+                                        print "error=",error
+                                        k = float(error)/30.0
+                                        print "k=",k
+                                        # cap the speed since might cause robot to rotate.
+                                        if k > 2.0:
+                                                k =2.0
+				                           
+					print "nmew speed=",self.speed+k	
+                                        self.setMotorRotationSpeed(self.speed-k, self.speed+k)
+					self.rotateRight(15)
+					 
 			else:
-				print "Failed US Reading"
-				usREading = 30;
-			error = usReading - 30
-			if error < 0:
-				error = 0;
-			k = float(error)/30.0
-			if k > 1:
-				k = 1
+				print "failed usRading"
+
+			
+
+	def MoveForwardsWithSonar(self):
+	
+		threshold = 40
+		bufferSize = 5 
+
+		circularBuffer = CircularBuffer.CircularBuffer(bufferSize)
+		
+		# this is to fill the buffer with intial values so that median can be calculated correctly later
+		for i in range(bufferSize):
+
+			usReading = interface.getSensorValue(self.sonar_port)
+		
+			if(usReading):
+				circularBuffer.add(usReading[0])
+				print circularBuffer.circularBuffer
+		
+						
+
+			
+                while True:
+                        usReading = interface.getSensorValue(self.sonar_port)
+	
 			if usReading:
-				self.setMotorRotationSpeed(self.speed*k, self.speed*k)
+
+				
+				# imp - this threshold will need to be changed if the 
+				# 	speed is too high 
+	
+					
+				median = circularBuffer.getMedian()				
+				circularBuffer.add(usReading[0])
+				
+				if((usReading[0] < median + threshold) and (usReading[0] > median - threshold) ):  
+						
+					error = usReading[0] - 30
+						
+				      	print "error=",error
+			        	k = float(error)/30.0
+					print "k=",k
+					# cap the speed if the robot is far away from obstacle.
+			        	if k > 1:
+						k =1
+			   
+					self.setMotorRotationSpeed(self.speed*k, self.speed*k)
+				
+
+
+			else:	
+                              	 print "Failed US REading"
 				
 	
 		
@@ -208,8 +296,10 @@ robot = Robot()
 #robot.rotateRight(90)
 #interface.startLogging("/home/pi/BrickPi/log3.txt")
 #robot.moveBackwards(100)
-robot.moveForwards(20)
-robot.moveForwards()
+#robot.moveForwards(20)
+#robot.moveForwards()
 #robot.reverseForkLeft(360)
+#robot.MoveForwardsWithSonar()
+robot.followWallWithSonar()
 #interface.stopLogging()
 interface.terminate()
