@@ -177,61 +177,34 @@ class Robot:
 				if motorAngles :
 					print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
 
-	#works for following left wall
-	def followWallWithSonar(self):
-		threshold = 40
-                bufferSize = 5
-		speedConstant = 12.0
 
-                circularBuffer = CircularBuffer.CircularBuffer(bufferSize)
-
-                # this is to fill the buffer with intial values so that median can be calculated correctly later
-                for i in range(bufferSize):
-
-                        usReading = interface.getSensorValue(self.sonar_port)
-
-                        if(usReading):
-                                circularBuffer.add(usReading[0])
-                                print circularBuffer.circularBuffer
-
-
-
-
-                while True:
-                        usReading = interface.getSensorValue(self.sonar_port)
-
-                        if usReading:
-
-
-                                # imp - this threshold will need to be changed if the 
-                                #       speed is too high 
-
-
-                                median = circularBuffer.getMedian()
-                                circularBuffer.add(usReading[0])
-
-                                if((usReading[0] < median + threshold) and (usReading[0] > median - threshold) ):
-
-                                        error = usReading[0] - 30
-
-                                        print "error=",error
-                                        k = float(error)/30.0
-                                        print "k=",k
-                                        # cap the speed since might cause robot to rotate.
-                                        if k > 2.0:
-                                                k =2.0
-				                           
-					print "nmew speed=",self.speed+k	
-                                        self.setMotorRotationSpeed(self.speed-k, self.speed+k)
-					self.rotateRight(15)
-					 
+	# Python only initialises default parameters on the first call,
+	# so circularBuffer would be initially empty and fill up
+	# returns the median of the values
+	def readUsSensor(self, circularBuffer = CircularBuffer()):
+		#first fill up the circular buffer if it isn't already
+		while len(circularBuffer.circularBuffer) < circularBuffer.maxSize+1:
+			usReading = interface.getSensorValue(self.sonar_port)
+			if usReading:
+				print(usReading)
 			else:
-				print "failed usRading"
+				print "Failed US Reading"
+				usReading[0] = 255
+			circularBuffer.add(usReading[0])
+		return circularBuffer.getMedian()
 
-			
+	def MoveForwardsWithSonar(self, safeDistance):
+		while True:
+			usReading = self.readUsSensor()	#returns the median of the circular buffer
+			error = usReading - safeDistance
+			k = float(error)/30.0	#k gain - adjust for different smoothness
+			if k > 1:
+				k = 1
+			if k < -1:
+				k = -1
+			self.setMotorRotationSpeed(k*self.speed, k*self.speed)
 
-	def MoveForwardsWithSonar(self):
-	
+		'''
 		threshold = 40
 		bufferSize = 5 
 
@@ -248,37 +221,90 @@ class Robot:
 		
 						
 
-			
-                while True:
-                        usReading = interface.getSensorValue(self.sonar_port)
-	
+				
+	     while True:
+	        usReading = interface.getSensorValue(self.sonar_port)
+
 			if usReading:
 
+			
+			# imp - this threshold will need to be changed if the 
+			# 	speed is too high 
+
 				
-				# imp - this threshold will need to be changed if the 
-				# 	speed is too high 
-	
+			median = circularBuffer.getMedian()				
+			circularBuffer.add(usReading[0])
+			
+			if((usReading[0] < median + threshold) and (usReading[0] > median - threshold) ):  
 					
-				median = circularBuffer.getMedian()				
-				circularBuffer.add(usReading[0])
-				
-				if((usReading[0] < median + threshold) and (usReading[0] > median - threshold) ):  
-						
-					error = usReading[0] - 30
-						
-				      	print "error=",error
-			        	k = float(error)/30.0
-					print "k=",k
-					# cap the speed if the robot is far away from obstacle.
-			        	if k > 1:
-						k =1
-			   
-					self.setMotorRotationSpeed(self.speed*k, self.speed*k)
-				
-
-
+				error = usReading[0] - 30
+					
+			      	print "error=",error
+		        	k = float(error)/30.0
+				print "k=",k
+				# cap the speed if the robot is far away from obstacle.
+		        	if k > 1:
+					k =1
+		   
+				self.setMotorRotationSpeed(self.speed*k, self.speed*k)
 			else:	
-                              	 print "Failed US REading"
+				print "Failed US REading"
+		'''
+
+	#works for following left wall
+	def followWallWithSonar(self):
+		threshold = 40
+		bufferSize = 5
+		speedConstant = 12.0
+		'''
+		circularBuffer = CircularBuffer.CircularBuffer(bufferSize)
+
+		# this is to fill the buffer with intial values so that median can be calculated correctly later
+		for i in range(bufferSize):
+
+		        usReading = interface.getSensorValue(self.sonar_port)
+
+		        if(usReading):
+		                circularBuffer.add(usReading[0])
+		                print circularBuffer.circularBuffer
+
+
+
+
+		while True:
+		        usReading = interface.getSensorValue(self.sonar_port)
+
+		    if usReading:
+
+
+		                # imp - this threshold will need to be changed if the 
+		                #       speed is too high 
+
+
+		                median = circularBuffer.getMedian()
+		                circularBuffer.add(usReading[0])
+
+		                if((usReading[0] < median + threshold) and (usReading[0] > median - threshold) ):
+
+		                        error = usReading[0] - 30
+
+		                        print "error=",error
+		                        k = float(error)/30.0
+		                        print "k=",k
+		                        # cap the speed since might cause robot to rotate.
+		                        if k > 2.0:
+		                                k =2.0
+		                           
+			print "nmew speed=",self.speed+k	
+		                        self.setMotorRotationSpeed(self.speed-k, self.speed+k)
+			self.rotateRight(15)
+					 
+			else:
+				print "failed usRading"
+
+			
+
+
 				
 	
 		
