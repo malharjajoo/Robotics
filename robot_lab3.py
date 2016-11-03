@@ -1,12 +1,9 @@
 import brickpi
 import time
-#from enum import Enum
 import CircularBuffer
+import Particle
 
 interface = None
-
-#class State(Enum):
-	
 
 class Robot:
 	# attributes - ideally different components (motors, ultrasonic sensor, etc)
@@ -15,6 +12,9 @@ class Robot:
 	touch_ports = [0,1]
 	sonar_port = 3
 	usSensorBuffer = CircularBuffer.CircularBuffer()
+	noOfParticles = 100
+	particles_list = [Particle.Particle()]*noOfParticles
+
 	def __init__(self):
 		global interface
 		interface = brickpi.Interface()
@@ -49,8 +49,7 @@ class Robot:
 		interface.setMotorPwm(self.motors[0],0)
 		interface.setMotorPwm(self.motors[1],0)
 		print("moving back now....")
-		self.moveBackwards(20)
-		
+		self.moveBackwards(20)		
 		self.rotateLeft(angle)
 		
 			
@@ -83,6 +82,7 @@ class Robot:
 		else:
 			angle = self.distToAngle(distance)
 			self.increaseMotorAngle(angle, angle)
+			self.updateParticlePositions(distance, 0)
 
 	def moveBackwards(self, distance=-1):
 		if distance<0:
@@ -100,6 +100,7 @@ class Robot:
 
 	def rotateLeft(self, angle):
 		self.rotateRight(-angle)
+		self.updateParticlePositions(0, angle)
 
 
 	# conversion functions
@@ -218,11 +219,29 @@ class Robot:
 			speed_left = self.speed - ((k/2)*(error))
 			self.setMotorRotationSpeed(speed_left, speed_right)
 
+	def updateParticlePositions(self, distance, angle):
+		for particle in self.particles_list:
+			if(distance!=0):
+				particle.updateDistanceRandom(distance)
+			if(angle!=0):
+				particle.updateAngleRandom(angle)
+
+		self.printParticles(self.particles_list)
+
+	def printParticles(self,particles_list):
+		p = []
+		for particle in particles_list:
+			p.append((particle.x,particle.y,particle.theta))
+
+		print "drawParticles:" + str(p)	
+				 
+
 # End of Robot Class
 
 # main
 robot = Robot()
 #robot.MoveForwardsWithSonar(30)
-robot.followWallWithSonar(30)
+#robot.followWallWithSonar(30)
+robot.moveForwards(10)
 interface.terminate()
 #END
