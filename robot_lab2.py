@@ -14,6 +14,7 @@ class Robot:
 	speed = 6.0
 	touch_ports = [0,1]
 	sonar_port = 3
+	usSensorBuffer = CircularBuffer.CircularBuffer()
 	def __init__(self):
 		global interface
 		interface = brickpi.Interface()
@@ -178,132 +179,50 @@ class Robot:
 					print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
 
 
-	# Python only initialises default parameters on the first call,
-	# so circularBuffer would be initially empty and fill up
-	# returns the median of the values
-	def readUsSensor(self, circularBuffer = CircularBuffer()):
+	def readUsSensor(self, circularBuffer):
 		#first fill up the circular buffer if it isn't already
-		while len(circularBuffer.circularBuffer) < circularBuffer.maxSize+1:
-			usReading = interface.getSensorValue(self.sonar_port)
-			if usReading:
-				print(usReading)
-			else:
-				print "Failed US Reading"
-				usReading[0] = 255
-			circularBuffer.add(usReading[0])
+		usReading = interface.getSensorValue(self.sonar_port)
+		if usReading:
+			print(usReading)
+		else:
+			print "Failed US Reading"
+		circularBuffer.add(usReading[0])
+		print circularBuffer.circularBuffer
 		return circularBuffer.getMedian()
 
 	def MoveForwardsWithSonar(self, safeDistance):
 		while True:
-			usReading = self.readUsSensor()	#returns the median of the circular buffer
+			usReading = self.readUsSensor(self.usSensorBuffer)	#returns the median of the circular buffer
+			print "median=",usReading
 			error = usReading - safeDistance
 			k = float(error)/30.0	#k gain - adjust for different smoothness
-			k = max(-1, min(k,1))
+			if k > 1:
+				k = 1
+			if k < -1:
+				k = -1
+			print "k=",k
 			self.setMotorRotationSpeed(k*self.speed, k*self.speed)
 
-		'''
-		threshold = 40
-		bufferSize = 5 
-
-		circularBuffer = CircularBuffer.CircularBuffer(bufferSize)
 		
-		# this is to fill the buffer with intial values so that median can be calculated correctly later
-		for i in range(bufferSize):
-
-			usReading = interface.getSensorValue(self.sonar_port)
-		
-			if(usReading):
-				circularBuffer.add(usReading[0])
-				print circularBuffer.circularBuffer
-		
-						
-
-				
-	     while True:
-	        usReading = interface.getSensorValue(self.sonar_port)
-
-			if usReading:
-
-			
-			# imp - this threshold will need to be changed if the 
-			# 	speed is too high 
-
-				
-			median = circularBuffer.getMedian()				
-			circularBuffer.add(usReading[0])
-			
-			if((usReading[0] < median + threshold) and (usReading[0] > median - threshold) ):  
-					
-				error = usReading[0] - 30
-					
-			      	print "error=",error
-		        	k = float(error)/30.0
-				print "k=",k
-				# cap the speed if the robot is far away from obstacle.
-		        	if k > 1:
-					k =1
-		   
-				self.setMotorRotationSpeed(self.speed*k, self.speed*k)
-			else:	
-				print "Failed US REading"
-		'''
-
 	#works for following left wall
-	def followWallWithSonar(self):
-		threshold = 40
-		bufferSize = 5
-		speedConstant = 12.0
-		circularBuffer = CircularBuffer.CircularBuffer(bufferSize)
-
-		# this is to fill the buffer with intial values so that median can be calculated correctly later
-		for i in range(bufferSize):
-
-		        usReading = interface.getSensorValue(self.sonar_port)
-
-		        if(usReading):
-		                circularBuffer.add(usReading[0])
-		                print circularBuffer.circularBuffer
-
-
-
-
+	def followWallWithSonar(self, distance):
 		while True:
-		        usReading = interface.getSensorValue(self.sonar_port)
-
-		    if usReading:
-
-
-		                # imp - this threshold will need to be changed if the 
-		                #       speed is too high 
-
-
-		                median = circularBuffer.getMedian()
-		                circularBuffer.add(usReading[0])
-
-		                if((usReading[0] < median + threshold) and (usReading[0] > median - threshold) ):
-
-		                        error = usReading[0] - 30
-
-		                        print "error=",error
-		                        k = float(error)/30.0
-		                        print "k=",k
-		                        # cap the speed since might cause robot to rotate.
-		                        if k > 2.0:
-		                                k =2.0
-		                           
-			print "nmew speed=",self.speed+k	
-		                        self.setMotorRotationSpeed(self.speed-k, self.speed+k)
-			self.rotateRight(15)
-					 
-			else:
-				print "failed usRading"
-
+			usReading = self.readUsSensor(self.usSensorBuffer)
+			error = usReading - distance
+			if error > 30:
+				error = 30
+			if error < -30:
+				error = -30
+			k = 0.1
+			speed_right = self.speed + ((k/2)*(error))
+			speed_left = self.speed - ((k/2)*(error))
+			self.setMotorRotationSpeed(speed_left, speed_right)
 
 # End of Robot Class
 
 # main
 robot = Robot()
-robot.MoveForwardsWithSonar(30)
-#robot.followWallWithSonar()
+#robot.MoveForwardsWithSonar(30)
+robot.followWallWithSonar(30)
 interface.terminate()
 #END
