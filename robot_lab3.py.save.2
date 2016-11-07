@@ -288,33 +288,17 @@ class Robot:
 
 	def navigateToWaypoint(self, x, y):
 			distance = math.sqrt((self.x-x)*(self.x-x) + (self.y-y)*(self.y-y))
-
-                        d1 = math.sqrt((self.x-0)*(self.x-0) + (self.y-0)*(self.y-0))
-
-                        # distance from origin of new point
-                        d2 = math.sqrt((x-0)*(x-0) + (y-0)*(y-0))
-
-			# angle between detination point and origin
-                        b = math.atan2(float(y - 0),float(x - 0))
-
-
-                        newAngle = math.degrees(math.acos((float(d2)/float(distance))*math.sin(self.theta-b)))
-			newAngle = 90 - newAngle
-                        
+			newAngle = math.degrees(math.atan2(float(y-self.y),float(x-self.x)))
 			
-                        #newAngle = math.degrees(math.atan2(float(y - self.y),float(x - self.x)))
-
-
-
-                        print("distance to move: " + str(distance))
-                        print("angle to rotate by: " + str(newAngle))
-                        #newAngle = self.theta - newAngle
-                        if newAngle < 0:
-                                #print("rot right")
-                                self.rotateRight(-newAngle)
+			print("distance to move: " + str(distance))
+			print("angle to rotate by: " + str(newAngle))
+			newAngle = newAngle - self.theta
+			if newAngle < 0:
+				#print("rot right")
+				self.rotateRight(-newAngle)
 			else:
-                        	#print ("rot left")
-                       		self.rotateLeft(newAngle)
+				#print ("rot left")
+				self.rotateLeft(newAngle)
 			self.moveForwards(distance)
 
 
@@ -322,18 +306,14 @@ class Robot:
 
 # main
 robot = Robot()
-
 #robot.moveSquare40Stop10()
 
-x, y = raw_input("Enter two coordinates here: ").split()
-robot.navigateToWaypoint(int(x),int(y))
+#x, y = raw_input("Enter two coordinates here: ").split()
+#robot.navigateToWaypoint(int(x),int(y))
 
-x, y = raw_input("Enter two coordinates here: ").split()
-robot.navigateToWaypoint(int(x),int(y))
-
-#while True:
-#	print(robot.readUsSensor(robot.usSensorBuffer))
-#	time.sleep(0.5)
+while True:
+	print(robot.readUsSensor(robot.usSensorBuffer))
+	time.sleep(0.5)
 
 interface.terminate()
 #END

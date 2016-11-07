@@ -11,8 +11,8 @@ class Particle:
 		self.weight = 0.01
 
 	def updateDistanceRandom(self, distance):
-		e = random.gauss(0,1) * (float(distance)/30.0)
-		f =  random.gauss(0,1) * (float(distance)/15.0)
+		e = random.gauss(0,1) * (float(distance)/10.0)
+		f =  random.gauss(0,1) * (float(distance)/10.0)
 		#e = random.random() * (distance/20)	# change divisor to change spreading
 		#f = random.random() * (distance/20)	# change divisor to change spreading
 		#print("old x is "+str(self.x))
