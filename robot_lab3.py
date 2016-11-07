@@ -287,35 +287,55 @@ class Robot:
 		self.theta = theta_sum / self.noOfParticles
 
 	def navigateToWaypoint(self, x, y):
-			distance = math.sqrt((self.x-x)*(self.x-x) + (self.y-y)*(self.y-y))
+		#if (x==0) and (y=0)
+			b = math.sqrt((self.x-x)*(self.x-x) + (self.y-y)*(self.y-y))
 
-                        d1 = math.sqrt((self.x-0)*(self.x-0) + (self.y-0)*(self.y-0))
+                        c = math.sqrt(self.x*self.x + self.y*self.y)
 
-                        # distance from origin of new point
-                        d2 = math.sqrt((x-0)*(x-0) + (y-0)*(y-0))
+			a = math.sqrt(x*x+y*y)
+
+			tmp=(a*a+b*b-c*c)/(2*a*b)
+
+			C=math.degrees(math.acos(tmp))
+
+			print("angle C "+str(C))
+			print("self theta "+str(self.theta))
+
+			
+
 
 			# angle between detination point and origin
-                        b = math.atan2(float(y - 0),float(x - 0))
+                        w = math.degrees(math.atan2(float(y),float(x)))
+			z = math.degrees(math.atan2(float(self.y), float(self.x)))
 
+			print("angle w "+str(w))
+			print("x "+str(self.x)+"y "+str(self.y))
+			print("angle z "+str(z))
 
-                        newAngle = math.degrees(math.acos((float(d2)/float(distance))*math.sin(self.theta-b)))
-			newAngle = 90 - newAngle
+			if w>z:
+				B=w-z
+			else:
+				B=z-w
+
+			print("angle B "+str(B))
+
+			newAngle=C+B
                         
 			
                         #newAngle = math.degrees(math.atan2(float(y - self.y),float(x - self.x)))
 
 
 
-                        print("distance to move: " + str(distance))
+                        print("distance to move: " + str(b))
                         print("angle to rotate by: " + str(newAngle))
                         #newAngle = self.theta - newAngle
-                        if newAngle < 0:
+                        if w<z:
                                 #print("rot right")
-                                self.rotateRight(-newAngle)
+                                self.rotateRight(newAngle)
 			else:
                         	#print ("rot left")
                        		self.rotateLeft(newAngle)
-			self.moveForwards(distance)
+			self.moveForwards(b)
 
 
 # End of Robot Class
@@ -328,8 +348,20 @@ robot = Robot()
 x, y = raw_input("Enter two coordinates here: ").split()
 robot.navigateToWaypoint(int(x),int(y))
 
+print(str(robot.theta))
+print(str(robot.y))
+
 x, y = raw_input("Enter two coordinates here: ").split()
 robot.navigateToWaypoint(int(x),int(y))
+
+print(str(robot.theta))
+print(str(robot.y))
+
+x, y = raw_input("Enter two coordinates here: ").split()
+robot.navigateToWaypoint(int(x),int(y))
+
+print(str(robot.theta))
+print(str(robot.y))
 
 #while True:
 #	print(robot.readUsSensor(robot.usSensorBuffer))
