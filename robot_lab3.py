@@ -261,7 +261,7 @@ class Robot:
 
 		p = []
 		for particle in self.particles_list:
-			p.append(((origin[0]+particle.x)*drawScale,(origin[1]+particle.y)*drawScale,particle.theta))
+			p.append(((origin[0]+particle.x)*drawScale,(origin[1]-particle.y)*drawScale,-particle.theta))
 
 		print "drawParticles:" + str(p)
 		#print p	
@@ -288,54 +288,47 @@ class Robot:
 
 	def navigateToWaypoint(self, x, y):
 		#if (x==0) and (y=0)
-			b = math.sqrt((self.x-x)*(self.x-x) + (self.y-y)*(self.y-y))
+		b = math.sqrt((self.x-x)*(self.x-x) + (self.y-y)*(self.y-y))
 
-                        c = math.sqrt(self.x*self.x + self.y*self.y)
+		c = math.sqrt(self.x*self.x + self.y*self.y)
 
-			a = math.sqrt(x*x+y*y)
+		a = math.sqrt(x*x+y*y)
 
-			tmp=(a*a+b*b-c*c)/(2*a*b)
+		tmp=(a*a+b*b-c*c)/(2*a*b)
 
-			C=math.degrees(math.acos(tmp))
+		C=math.degrees(math.acos(tmp))
 
-			print("angle C "+str(C))
-			print("self theta "+str(self.theta))
+		print("angle C "+str(C))
+		print("self theta "+str(self.theta))
 
-			
+		# angle between detination point and origin
+		w = math.degrees(math.atan2(float(y),float(x)))
+		z = math.degrees(math.atan2(float(self.y), float(self.x)))
 
+		print("angle w "+str(w))
+		print("x "+str(self.x)+"y "+str(self.y))
+		print("angle z "+str(z))
 
-			# angle between detination point and origin
-                        w = math.degrees(math.atan2(float(y),float(x)))
-			z = math.degrees(math.atan2(float(self.y), float(self.x)))
+		if w>z:
+			B=w-z
+		else:
+			B=z-w
 
-			print("angle w "+str(w))
-			print("x "+str(self.x)+"y "+str(self.y))
-			print("angle z "+str(z))
+		print("angle B "+str(B))
 
-			if w>z:
-				B=w-z
-			else:
-				B=z-w
+		newAngle = C + B
+		#newAngle = math.degrees(math.atan2(float(y - self.y),float(x - self.x)))
 
-			print("angle B "+str(B))
-
-			newAngle=C+B
-                        
-			
-                        #newAngle = math.degrees(math.atan2(float(y - self.y),float(x - self.x)))
-
-
-
-                        print("distance to move: " + str(b))
-                        print("angle to rotate by: " + str(newAngle))
-                        #newAngle = self.theta - newAngle
-                        if w<z:
-                                #print("rot right")
-                                self.rotateRight(newAngle)
-			else:
-                        	#print ("rot left")
-                       		self.rotateLeft(newAngle)
-			self.moveForwards(b)
+		print("distance to move: " + str(b))
+		print("angle to rotate by: " + str(newAngle))
+		#newAngle = self.theta - newAngle
+		if w<z:
+			#print("rot right")
+			self.rotateRight(newAngle)
+		else:
+			#print ("rot left")
+			self.rotateLeft(newAngle)
+		self.moveForwards(b)
 
 
 # End of Robot Class
@@ -345,23 +338,11 @@ robot = Robot()
 
 #robot.moveSquare40Stop10()
 
-x, y = raw_input("Enter two coordinates here: ").split()
-robot.navigateToWaypoint(int(x),int(y))
-
-print(str(robot.theta))
-print(str(robot.y))
-
-x, y = raw_input("Enter two coordinates here: ").split()
-robot.navigateToWaypoint(int(x),int(y))
-
-print(str(robot.theta))
-print(str(robot.y))
-
-x, y = raw_input("Enter two coordinates here: ").split()
-robot.navigateToWaypoint(int(x),int(y))
-
-print(str(robot.theta))
-print(str(robot.y))
+while True:
+	x, y = raw_input("Enter two coordinates here: ").split()
+	robot.navigateToWaypoint(int(x),int(y))
+	print(str(robot.theta))
+	print(str(robot.y))
 
 #while True:
 #	print(robot.readUsSensor(robot.usSensorBuffer))
