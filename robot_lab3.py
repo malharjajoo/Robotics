@@ -42,11 +42,11 @@ class Robot:
 
 		self.createParticlesList()
 		#temp draw debug, remove after
-		self.printParticles()
-		time.sleep(2)
-		for i in range(0,5):
-			self.updateParticlePositions(50,0)
-			self.updateParticlePositions(0,90)
+		#self.printParticles()
+		#time.sleep(2)
+		#for i in range(0,4):
+		#	self.updateParticlePositions(40,0)
+		#	self.updateParticlePositions(0,90)
 	
 	def createParticlesList(self):
 		for i in range(0,self.noOfParticles):
@@ -105,14 +105,17 @@ class Robot:
   		else:
 			angle = self.distToAngle(-distance)
 			self.increaseMotorAngle(angle, angle)
+			self.updateParticlePositions(-distance, 0)
 
 	def rotateRight(self, rotAngle):
 		angle = self.rotAngleToMotorAngle(rotAngle)
 		self.increaseMotorAngle(angle, -angle)
+		self.updateParticlePositions(0,rotAngle)
 
-	def rotateLeft(self, angle):
-		self.rotateRight(-angle)
-		self.updateParticlePositions(0, angle)
+	def rotateLeft(self, rotAngle):
+		angle = self.rotAngleToMotorAngle(rotAngle)
+		self.increaseMotorAngle(-angle, angle)
+		self.updateParticlePositions(0, -rotAngle)
 
 
 	# conversion functions
@@ -188,8 +191,8 @@ class Robot:
 				break
 			else:
 				motorAngles = interface.getMotorAngles(self.motors)
-				if motorAngles :
-					print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
+				#if motorAngles :
+					#print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
 
 
 	def readUsSensor(self, circularBuffer):
@@ -257,8 +260,14 @@ class Robot:
 
 		print "drawParticles:" + str(p)
 		print p	
-		time.sleep(2)
+		time.sleep(1)
 				 
+	def moveSquare40Stop10(self):
+		for i in range(0,4):
+			for i in range(0,4):
+				self.moveForwards(10)
+			self.rotateRight(90)
+
 
 # End of Robot Class
 
@@ -266,6 +275,6 @@ class Robot:
 robot = Robot()
 #robot.MoveForwardsWithSonar(30)
 #robot.followWallWithSonar(30)
-#robot.moveForwards(10)
+robot.moveSquare40Stop10()
 interface.terminate()
 #END

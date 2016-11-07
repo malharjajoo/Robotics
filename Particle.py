@@ -11,10 +11,10 @@ class Particle:
 		self.weight = 0.01
 
 	def updateDistanceRandom(self, distance):
-		#e = random.gauss(0,1)
-		#f =  random.gauss(0,1)
-		e = random.random() * (distance/20)	# change divisor to change spreading
-		f = random.random() * (distance/20)	# change divisor to change spreading
+		e = random.gauss(0,1) * (distance/40)
+		f =  random.gauss(0,1) * (distance/40)
+		#e = random.random() * (distance/20)	# change divisor to change spreading
+		#f = random.random() * (distance/20)	# change divisor to change spreading
 		#print("old x is "+str(self.x))
 		#print("old y is "+str(self.y))
 		self.x = self.x + ((distance + e)*math.cos(math.radians(self.theta)))
