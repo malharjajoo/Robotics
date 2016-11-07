@@ -1,12 +1,10 @@
 import brickpi
 import time
-#from enum import Enum
 import CircularBuffer
+import Particle
+import math
 
 interface = None
-
-#class State(Enum):
-	
 
 class Robot:
 	# attributes - ideally different components (motors, ultrasonic sensor, etc)
@@ -15,6 +13,12 @@ class Robot:
 	touch_ports = [0,1]
 	sonar_port = 3
 	usSensorBuffer = CircularBuffer.CircularBuffer()
+	noOfParticles = 100
+	particles_list = []
+	x = 0
+	y = 0
+	theta = 0
+
 	def __init__(self):
 		global interface
 		interface = brickpi.Interface()
@@ -40,6 +44,19 @@ class Robot:
 		interface.setMotorAngleControllerParameters(self.motors[0],motorParams)
 		interface.setMotorAngleControllerParameters(self.motors[1],motorParams)	
 
+		self.createParticlesList()
+		#temp draw debug, remove after
+		#self.printParticles()
+		#time.sleep(2)
+		#for i in range(0,4):
+		#	for i in range(0,4):
+		#		self.updatePosition(10,0)
+		#	self.updatePosition(0,-90)
+	
+	def createParticlesList(self):
+		for i in range(0,self.noOfParticles):
+			self.particles_list.append(Particle.Particle())
+
 	# movement functions
 	def setSpeed(self, newSpeed):
 		 self.speed = newSpeed
@@ -49,8 +66,7 @@ class Robot:
 		interface.setMotorPwm(self.motors[0],0)
 		interface.setMotorPwm(self.motors[1],0)
 		print("moving back now....")
-		self.moveBackwards(20)
-		
+		self.moveBackwards(20)		
 		self.rotateLeft(angle)
 		
 			
@@ -83,6 +99,7 @@ class Robot:
 		else:
 			angle = self.distToAngle(distance)
 			self.increaseMotorAngle(angle, angle)
+			self.updatePosition(distance, 0)
 
 	def moveBackwards(self, distance=-1):
 		if distance<0:
@@ -93,13 +110,17 @@ class Robot:
   		else:
 			angle = self.distToAngle(-distance)
 			self.increaseMotorAngle(angle, angle)
+			self.updatePosition(-distance, 0)
 
 	def rotateRight(self, rotAngle):
 		angle = self.rotAngleToMotorAngle(rotAngle)
 		self.increaseMotorAngle(angle, -angle)
+		self.updatePosition(0,-rotAngle)
 
-	def rotateLeft(self, angle):
-		self.rotateRight(-angle)
+	def rotateLeft(self, rotAngle):
+		angle = self.rotAngleToMotorAngle(rotAngle)
+		self.increaseMotorAngle(-angle, angle)
+		self.updatePosition(0, rotAngle)
 
 
 	# conversion functions
@@ -175,8 +196,8 @@ class Robot:
 				break
 			else:
 				motorAngles = interface.getMotorAngles(self.motors)
-				if motorAngles :
-					print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
+				#if motorAngles :
+					#print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
 
 
 	def readUsSensor(self, circularBuffer):
@@ -187,7 +208,7 @@ class Robot:
 		else:
 			print "Failed US Reading"
 		circularBuffer.add(usReading[0])
-		print circularBuffer.circularBuffer
+		#print circularBuffer.circularBuffer
 		return circularBuffer.getMedian()
 
 	def MoveForwardsWithSonar(self, safeDistance):
@@ -218,11 +239,101 @@ class Robot:
 			speed_left = self.speed - ((k/2)*(error))
 			self.setMotorRotationSpeed(speed_left, speed_right)
 
+	def updateParticlePositions(self, distance, angle):
+		for particle in self.particles_list:
+			if(distance!=0):
+				particle.updateDistanceRandom(distance)
+			if(angle!=0):
+				particle.updateAngleRandom(angle)
+
+		self.printParticles()
+
+	def printParticles(self):
+		drawScale = 10	# Used to scale the particle positions on the screen
+		origin = (10,60)
+
+		#draw origin
+		oLen = 2
+		print "drawLine:" + str(((origin[0]-oLen)*drawScale,origin[1]*drawScale,
+			(origin[0]+oLen)*drawScale,origin[1]*drawScale))
+		print "drawLine:" + str((origin[0]*drawScale,(origin[1]-oLen)*drawScale,
+			origin[0]*drawScale,(origin[1]+oLen)*drawScale))
+
+		p = []
+		for particle in self.particles_list:
+			p.append(((origin[0]+particle.x)*drawScale,(origin[1]+particle.y)*drawScale,particle.theta))
+
+		print "drawParticles:" + str(p)
+		#print p	
+		time.sleep(1)
+				 
+	def moveSquare40Stop10(self):
+		for i in range(0,4):
+			for i in range(0,4):
+				self.moveForwards(10)
+			self.rotateLeft(90)
+
+	def updatePosition(self, distance, angle):
+		self.updateParticlePositions(distance, angle)
+		x_sum = 0
+		y_sum = 0
+		theta_sum = 0
+		for particle in self.particles_list:
+			x_sum += particle.x
+			y_sum += particle.y
+			theta_sum += particle.theta
+		self.x = x_sum / self.noOfParticles
+		self.y = y_sum / self.noOfParticles
+		self.theta = theta_sum / self.noOfParticles
+
+	def navigateToWaypoint(self, x, y):
+			distance = math.sqrt((self.x-x)*(self.x-x) + (self.y-y)*(self.y-y))
+
+                        d1 = math.sqrt((self.x-0)*(self.x-0) + (self.y-0)*(self.y-0))
+
+                        # distance from origin of new point
+                        d2 = math.sqrt((x-0)*(x-0) + (y-0)*(y-0))
+
+			# angle between detination point and origin
+                        b = math.atan2(float(y - 0),float(x - 0))
+
+
+                        newAngle = math.degrees(math.acos((float(d2)/float(distance))*math.sin(self.theta-b)))
+			newAngle = 90 - newAngle
+                        
+			
+                        #newAngle = math.degrees(math.atan2(float(y - self.y),float(x - self.x)))
+
+
+
+                        print("distance to move: " + str(distance))
+                        print("angle to rotate by: " + str(newAngle))
+                        #newAngle = self.theta - newAngle
+                        if newAngle < 0:
+                                #print("rot right")
+                                self.rotateRight(-newAngle)
+			else:
+                        	#print ("rot left")
+                       		self.rotateLeft(newAngle)
+			self.moveForwards(distance)
+
+
 # End of Robot Class
 
 # main
 robot = Robot()
-#robot.MoveForwardsWithSonar(30)
-robot.followWallWithSonar(30)
+
+#robot.moveSquare40Stop10()
+
+x, y = raw_input("Enter two coordinates here: ").split()
+robot.navigateToWaypoint(int(x),int(y))
+
+x, y = raw_input("Enter two coordinates here: ").split()
+robot.navigateToWaypoint(int(x),int(y))
+
+#while True:
+#	print(robot.readUsSensor(robot.usSensorBuffer))
+#	time.sleep(0.5)
+
 interface.terminate()
 #END
