@@ -18,7 +18,7 @@ class Particle:
 		#print("old x is "+str(self.x))
 		#print("old y is "+str(self.y))
 		self.x = self.x + ((distance + e)*math.cos(math.radians(self.theta)))
-		self.y = self.y + ((distance + e)*-math.sin(math.radians(self.theta)))
+		self.y = self.y + ((distance + e)*math.sin(math.radians(self.theta)))
 		#print("new x is "+str(self.x))
 		#print("new y x is "+str(self.y))
 		self.theta = self.theta + f
