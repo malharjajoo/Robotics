@@ -13,7 +13,7 @@ class Robot:
 	sonar_port = 3
 	usSensorBuffer = CircularBuffer.CircularBuffer()
 	noOfParticles = 100
-	particles_list = [Particle.Particle()]*noOfParticles
+	particles_list = []
 
 	def __init__(self):
 		global interface
@@ -39,6 +39,18 @@ class Robot:
 
 		interface.setMotorAngleControllerParameters(self.motors[0],motorParams)
 		interface.setMotorAngleControllerParameters(self.motors[1],motorParams)	
+
+		self.createParticlesList()
+		#temp draw debug, remove after
+		self.printParticles()
+		time.sleep(2)
+		for i in range(0,5):
+			self.updateParticlePositions(50,0)
+			self.updateParticlePositions(0,90)
+	
+	def createParticlesList(self):
+		for i in range(0,self.noOfParticles):
+			self.particles_list.append(Particle.Particle())
 
 	# movement functions
 	def setSpeed(self, newSpeed):
@@ -188,7 +200,7 @@ class Robot:
 		else:
 			print "Failed US Reading"
 		circularBuffer.add(usReading[0])
-		print circularBuffer.circularBuffer
+		#print circularBuffer.circularBuffer
 		return circularBuffer.getMedian()
 
 	def MoveForwardsWithSonar(self, safeDistance):
@@ -226,14 +238,26 @@ class Robot:
 			if(angle!=0):
 				particle.updateAngleRandom(angle)
 
-		self.printParticles(self.particles_list)
+		self.printParticles()
 
-	def printParticles(self,particles_list):
+	def printParticles(self):
+		drawScale = 10	# Used to scale the particle positions on the screen
+		origin = (20,20)
+
+		#draw origin
+		oLen = 2
+		print "drawLine:" + str(((origin[0]-oLen)*drawScale,origin[1]*drawScale,
+			(origin[0]+oLen)*drawScale,origin[1]*drawScale))
+		print "drawLine:" + str((origin[0]*drawScale,(origin[1]-oLen)*drawScale,
+			origin[0]*drawScale,(origin[1]+oLen)*drawScale))
+
 		p = []
-		for particle in particles_list:
-			p.append((particle.x,particle.y,particle.theta))
+		for particle in self.particles_list:
+			p.append(((origin[0]+particle.x)*drawScale,(origin[1]+particle.y)*drawScale,particle.theta))
 
-		print "drawParticles:" + str(p)	
+		print "drawParticles:" + str(p)
+		print p	
+		time.sleep(2)
 				 
 
 # End of Robot Class
@@ -242,6 +266,6 @@ class Robot:
 robot = Robot()
 #robot.MoveForwardsWithSonar(30)
 #robot.followWallWithSonar(30)
-robot.moveForwards(10)
+#robot.moveForwards(10)
 interface.terminate()
 #END
