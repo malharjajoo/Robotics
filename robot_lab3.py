@@ -364,6 +364,7 @@ class Robot:
                 print("angle to rotate left by: " + str(360+newAngle))
             self.moveForwards(b)
         
+		
 # End of Robot Class
 
 # main
