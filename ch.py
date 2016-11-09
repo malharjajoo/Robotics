@@ -131,7 +131,7 @@ class Robot:
     
     def rotAngleToMotorAngle(self, rotationAngle):
         #4.55 - w/ wheels
-        return float(rotationAngle * 4.85) / 90.0
+        return float(rotationAngle * 4.7) / 90.0
         
 
     # other member functions
@@ -250,7 +250,7 @@ class Robot:
 
     def printParticles(self):
         drawScale = 10    # Used to scale the particle positions on the screen
-        origin = (10,60)
+        origin = (10,10)
 
         #draw origin
         oLen = 2
@@ -261,7 +261,7 @@ class Robot:
 
         p = []
         for particle in self.particles_list:
-            p.append(((origin[0]+particle.x)*drawScale,(origin[1]-particle.y)*drawScale,-particle.theta))
+            p.append(((origin[0]+particle.x)*drawScale,(origin[1]+particle.y)*drawScale,particle.theta))
 
         print "drawParticles:" + str(p)
         #print p    
@@ -288,31 +288,55 @@ class Robot:
 
     def navigateToWaypoint(self, x, y):
         
+	   
         #if (x==0) and (y=0)
-            b = math.sqrt((self.x-x)*(self.x-x) + (self.y-y)*(self.y-y))
             
-            #print(str(x)+" "+str(y))
+            # rotate the origin
+ 	    new_origin_x = (self.x * math.cos(self.theta)) - (self.y * math.sin(self.theta))
+	    new_origin_y = (self.x * math.sin(self.theta)) + (self.y * math.cos(self.theta))
 
-            #c = math.sqrt(self.x*self.x + self.y*self.y)
+	    n
+	# rotate the points
+	#    new_x = (x * math.cos(self.theta)) - (y * math.sin(self.theta))
+         #   new_y = (x * math.sin(self.theta)) + (y * math.cos(self.theta))
 
-            #a = math.sqrt(x*x+y*y)
 
-            #tmp=(a*a+b*b-c*c)/(2*a*b)
+	# the correct distance
+	    distance = math.sqrt((self.x-x)*(self.x-x) + (self.y-y)*(self.y-y))
 
-            #C=math.degrees(math.acos(tmp))
-
-            #print("angle C "+str(C))
+	# the correct angle
+            abs_angle= (math.degrees(math.atan2(float(y-new_origin_y), float(x-new_origin_x))))
+ 
             
-            new_x=x-self.x
-            new_y=y-self.y
-            print(str(new_x)+" "+str(new_y))
-            rel_angle=math.degrees(math.atan2(float(new_y), float(new_x)))
             
-            #print("self theta "+str(self.theta))
+            #new_x = (new_x * math.cos(self.theta)) - (new_y * math.sin(self.theta))
+            #new_y = (new_x * math.sin(self.theta)) + (new_y * math.cos(self.theta))
+            
+	    print("new origin x = ",new_origin_x)
+	    print("new origin y = ",new_origin_y)
+  	    print("x=",x)
+	    print("y=",y)
+            
+                       
+            print("absolute angle =",abs_angle)
+ 	    self.rotateLeft(abs_angle)	
+            if(x-new_origin_x > 0 and y-new_origin_y > 0 ):
+		   print("first quadrant")
+                   self.rotateRight(90-abs_angle)
+                    
+            elif(x-new_origin_x > 0 and y-new_origin_y < 0 ):
+		   print("4th quad")
+                   self.rotateRight(90+abs(abs_angle))
+                    
+            elif(x-new_origin_x < 0 and y -new_origin_y < 0 ):
+		   print("third quad")
+                   self.rotateLeft(abs(abs_angle))
+                    
+            elif(x-new_origin_x < 0 and y-new_origin_y > 0 ):
+		   print("2dn quad")
+                   self.rotateLeft(abs_angle)
                 
             
-            print(str(rel_angle))
-            print(str(self.theta))
             
 
 
@@ -332,39 +356,18 @@ class Robot:
                 #B=math.degrees(math.asin((tmp2/c)*b))
 
             #print("angle B "+str(B))
-            
-            theta=self.theta%360
 
-            newAngle=rel_angle-theta
             
-            print(str(newAngle))
             
                         
             
             #newAngle = math.degrees(math.atan2(float(y - self.y),float(x - self.x)))
 
             #print("distance to move: " + str(b))
-            
+            #print("angle to rotate by: " + str(newAngle))
             #newAngle = self.theta - newAngle
-            if (newAngle>=-180) and (newAngle<0):
-                #print("rot right")
-                self.rotateRight(abs(newAngle))
-                print("angle to rotate right by: " + str(abs(newAngle)))
-            #elif abs(newAngle)>180 and y<0:
-                #print ("rot left")
-                #self.rotateLeft(newAngle)
-            elif (newAngle<180) and (newAngle>=0):
-                self.rotateLeft(newAngle)
-                print("angle to rotate left by: " + str(newAngle))
-            elif (newAngle>=180) and (newAngle<360):
-                self.rotateRight(360-newAngle)
-                print("angle to rotate right by: " + str(360-newAngle))
-            elif (newAngle<-180) and (newAngle>-360):
-                self.rotateLeft(360+newAngle)
-                print("angle to rotate left by: " + str(360+newAngle))
-            self.moveForwards(b)
+            self.moveForwards(distance)
         
-		
 # End of Robot Class
 
 # main
@@ -374,15 +377,15 @@ robot = Robot()
 #robot.moveSquare40Stop10()
 
 """function calls for part 2"""
-"""
+
 stop=False
 
 while not stop:
     x, y = raw_input("Enter two coordinates here: ").split()
     robot.navigateToWaypoint(int(x),int(y))
-    print(str(robot.x))
-    print(str(robot.y))
+
     print(str(robot.theta))
+    print(str(robot.y))
 
     answer=raw_input("do you want to continue?").split()
     
@@ -390,13 +393,11 @@ while not stop:
         stop=True
     else:
         stop=False
-"""
+
 """Loop for part 3"""
-while True:
-    print(robot.readUsSensor(robot.usSensorBuffer))
-    time.sleep(0.5)
-
-
+#while True:
+#    print(robot.readUsSensor(robot.usSensorBuffer))
+#    time.sleep(0.5)
 
 interface.terminate()
 #END
