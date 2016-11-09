@@ -3,6 +3,7 @@ import time
 import CircularBuffer
 import Particle
 import math
+import Map
 
 interface = None
 
@@ -286,9 +287,7 @@ class Robot:
         self.y = y_sum / self.noOfParticles
         self.theta = theta_sum / self.noOfParticles
 
-    def navigateToWaypoint(self, x, y):
-        
-        #if (x==0) and (y=0)
+	def navigateToWaypoint(self, x, y):
             b = math.sqrt((self.x-x)*(self.x-x) + (self.y-y)*(self.y-y))
             
             
@@ -296,9 +295,7 @@ class Robot:
             new_y=y-self.y
             print(str(new_x)+" "+str(new_y))
             rel_angle=math.degrees(math.atan2(float(new_y), float(new_x)))
-            
-            #print("self theta "+str(self.theta))
-                
+	    
             
             print(str(rel_angle))
             print(str(self.theta))
@@ -310,20 +307,9 @@ class Robot:
             
             print(str(newAngle))
             
-                        
-            
-            #newAngle = math.degrees(math.atan2(float(y - self.y),float(x - self.x)))
-
-            #print("distance to move: " + str(b))
-            
-            #newAngle = self.theta - newAngle
             if (newAngle>=-180) and (newAngle<0):
-                #print("rot right")
                 self.rotateRight(abs(newAngle))
                 print("angle to rotate right by: " + str(abs(newAngle)))
-            #elif abs(newAngle)>180 and y<0:
-                #print ("rot left")
-                #self.rotateLeft(newAngle)
             elif (newAngle<180) and (newAngle>=0):
                 self.rotateLeft(newAngle)
                 print("angle to rotate left by: " + str(newAngle))
@@ -335,41 +321,93 @@ class Robot:
                 print("angle to rotate left by: " + str(360+newAngle))
             self.moveForwards(b)
         
+
+	def calculate_likelihood(x, y, theta, z):
+		m_list = []
+		for wall in Map.map.walls:
+			#A = x1,y1; B = x2,y2
+			#m: lecture 5 slide 18
+			x1 = wall[0]
+			y1 = wall[1]
+			x2 = wall[2]
+			y2 = wall[3]
+			temp = ((y2-y1)*(x1-x) - (x2 - x1)*(y1 - y))/((y2 - y1)*math.cos(math.radians(theta)) - (x2 - x1)*math.sin(math.radians(theta)))
+			m_list.append(temp)
+		min_m = math.inf
+		min_m_index = 0
+		for i in range(len(m_list)):
+			if (m_list[i] >= 0 and m_list[i] < min_m):
+				current_wall = Map.map.walls[i]
+				x1 = current_wall[0]
+				y1 = current_wall[1]
+				x2 = current_wall[2]
+				y2 = current_wall[3]
+				intersect_x = x + m_list[i]*math.cos(math.radians(theta))
+				intersect_y = y + m_list[i]*math.sin(math.radians(theta))
+				# check if intersection is within wall region
+				if (intersect_x >= math.min(x1, x2)) and (intersect_x <= math.max(x1, x2)):
+					if( (intersect_y >= math.min(y1, y2)) and (intersect_y <= math.max(y1, y2)) ):
+						min_m = m_list[i]
+						min_m_index = i
+		current_wall = Map.map.walls[min_m_index]
+		x1 = current_wall[0]
+		y1 = current_wall[1]
+		x2 = current_wall[2]
+		y2 = current_wall[3]
+		k = 1.0
+		sigma_s = 1
+		#p(z|m)
+		prob = k*math.exp((-(z-m_min)*(z-m_min))/(2*sigma_s*sigma_s))
 		
+		angle_of_incidence = math.degrees(
+			math.acos(
+				(
+					(math.cos(math.radians(theta)) * (y1 - y2))
+					+ (math.sin(math.radians(theta))*(x2 - x1))
+				)/(
+					math.sqrt(
+						((y1 - y2)*(y1 - y2))
+						+ ((x2 - x1)*(x2 - x1))
+					)
+				)
+			)
+		)
+
+		if angle_of_incidence < 49 and m_min < 110:
+			return prob
+		else:
+			return -1
+
+	def updateWeights(self):
+		z = self.readUsSensor()
+		error_count = 0
+		
+		particles_list_copy = copy.deepcopy(self.particles_list)
+
+		for particle in self.particles_list:
+			prob = self.calculate_likelihood(particle.x,particle.y,particle.theta, z)
+			if prob == -1:
+				error_count += 1
+			else:
+				particle.weight = particle.weight * prob
+
+		if(error_count > self.noOfParticles/4):
+			self.particles_list = copy.deepcopy(particles_list_copy)
+		
+		self.normaliseParticleList()
+
+
+	def normaliseParticleList():
+		
+		
+		for particle in self.particleList : 
+			
+			particle.weight = float(particle.weight) /float( self.noOfParticles ) 
+				
 # End of Robot Class
 
 # main
 robot = Robot()
-
-"""function call for part 1"""
-#robot.moveSquare40Stop10()
-
-"""function calls for part 2"""
-
-"""
-
-stop=False
-
-while not stop:
-    x, y = raw_input("Enter two coordinates here: ").split()
-    robot.navigateToWaypoint(int(x),int(y))
-    print(str(robot.x))
-    print(str(robot.y))
-    print(str(robot.theta))
-
-    answer=raw_input("do you want to continue?").split()
-    
-    if answer=="no":
-        stop=True
-    else:
-        stop=False
-
-"""
-"""Loop for part 3"""
-while True:
-    print(robot.readUsSensor(robot.usSensorBuffer))
-    time.sleep(0.5)
-
 
 
 interface.terminate()
