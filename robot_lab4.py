@@ -250,9 +250,9 @@ class Robot:
         self.printParticles()
 
     def printParticles(self):
-        drawScale = 10    # Used to scale the particle positions on the screen
-        origin = (10,60)
-
+        drawScale = 3    # Used to scale the particle positions on the screen
+        origin = (10,400)
+	Map.map.draw(origin, drawScale)
         #draw origin
         oLen = 5
         print "drawLine:" + str(((origin[0]-oLen)*drawScale,origin[1]*drawScale,
@@ -279,13 +279,15 @@ class Robot:
         x_sum = 0
         y_sum = 0
         theta_sum = 0
+
         for particle in self.particles_list:
-            x_sum += particle.x
-            y_sum += particle.y
-            theta_sum += particle.theta
-        self.x = x_sum / self.noOfParticles
-        self.y = y_sum / self.noOfParticles
-        self.theta = theta_sum / self.noOfParticles
+            x_sum += particle.x*particle.weight
+            y_sum += particle.y*particle.weight
+            theta_sum += particle.theta*particle.weight
+
+        self.x = x_sum 
+        self.y = y_sum 
+        self.theta = theta_sum
 
 	def navigateToWaypoint(self, x, y):
             b = math.sqrt((self.x-x)*(self.x-x) + (self.y-y)*(self.y-y))
@@ -399,16 +401,20 @@ class Robot:
 
 	def normaliseParticleList():
 		
+		weightSum = 0 
+
+		for particle in self.particles_list:
+			weightSum += particle.weight 
 		
-		for particle in self.particleList : 
+		for particle in self.particles_list : 
 			
-			particle.weight = float(particle.weight) /float( self.noOfParticles ) 
+			particle.weight = float(particle.weight) /float(weightSum ) 
 				
 # End of Robot Class
 
 # main
 robot = Robot()
 
-
+robot.moveForwards(0)
 interface.terminate()
 #END

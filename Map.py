@@ -8,13 +8,13 @@ class Map:
     def clear(self):
         self.walls = [];
 
-    def draw(self):
+    def draw(self, origin, drawScale):
         for wall in self.walls:
 		x1 = wall[0]
 		y1 = wall[1]
 		x2 = wall[2]
 		y2 = wall[3]
-		print "drawLine:" + str((x1,y1,x2,y2))
+		print "drawLine:" + str(((x1+origin[0])*drawScale,(origin[1]-y1)*drawScale,(x2+origin[0])*drawScale,(origin[1]-y2)*drawScale))
 
 map = Map()
 
@@ -35,4 +35,4 @@ map.add_wall((168,210,168,84));   # e
 map.add_wall((168,84,210,84));    # f
 map.add_wall((210,84,210,0));     # g
 map.add_wall((210,0,0,0));        # h
-map.draw();
+#map.draw();
