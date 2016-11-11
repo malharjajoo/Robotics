@@ -252,7 +252,7 @@ class Robot:
 	def printParticles(self):
 		drawScale = 3    # Used to scale the particle positions on the screen
 		origin = (10,400)
-	Map.map.draw(origin, drawScale)
+		Map.map.draw(origin, drawScale)
 		#draw origin
 		oLen = 5
 		print "drawLine:" + str(((origin[0]-oLen)*drawScale,origin[1]*drawScale,
@@ -276,6 +276,7 @@ class Robot:
 
 	def updatePosition(self, distance, angle):
 		self.updateParticlePositions(distance, angle)
+		self.updateWeights()
 		x_sum = 0
 		y_sum = 0
 		theta_sum = 0
@@ -389,21 +390,76 @@ class Robot:
 			self.particles_list = copy.deepcopy(particles_list_copy)
 		
 		self.normaliseParticleList()
+		self.resampleParticlesList()
 
-
-	def normaliseParticleList():
+	#particle weights normalized so that they all add to 1
+	def normaliseParticleList(self):
 		weightSum = 0 
 		for particle in self.particles_list:
 			weightSum += particle.weight 
 			
-		for particle in self.particles_list  
-			particle.weight = float(particle.weight) /float(weightSum ) 
-				
+		for particle in self.particles_list:  
+			particle.weight = float(particle.weight) /float(weightSum )
+
+	def getCumulativeWeights(self):
+		
+		cumulative_weights =[0]*len(self.particles_list)
+
+		sum = 0 
+		for i in range(len(self.particles_list)):
+			
+			sum += self.particles_list[i].weight
+			cumulative_weights[i] = sum 
+		print("cumulative WEifht list = ",cumulative_weights)
+		print("last one should be 1=",cumulative_weights[self.noOfParticles-1])	
+		
+		return cumulative_weights
+
+	# input - old particle weights
+	# output - new particles with same normalized weight
+	def resampleParticlesList(self):
+		
+		cumulative_weights = self.getCumulativeWeights()
+		
+		new_weight = 1/float(self.noOfParticles)
+
+		resampled_particles_list = []
+
+		# fill the resampled list
+		for i in range(self.noOfParticles):
+			
+			randomWeight = random.random()
+			
+			# find intersectiopn with cumulative array
+			# and add to the resampled list
+			for i in range(len(cumulative_weights)):
+				if(randomWeight >= cumulative_weights[i-1] and  randomWeight < cumulativ_weights[i]):
+					print("intersection foudn")
+					resampled_particle = self.particles_list[i]
+					resampled_particle.weight = new_weight
+					resamped_particles_list.append(resampled_particle)
+
+		# reassign the no. of particles 
+		self.particles_list = copy.deepcopy(resampled_particles_list)
+
+
+
 # End of Robot Class
 
 # main
 robot = Robot()
 
-robot.moveForwards(0)
+#robot.moveForwards(0)
+
+robot.navigateToWayPoint((84,30))
+robot.navigateToWayPoint((180,30))
+robot.navigateToWayPoint((180,54))
+robot.navigateToWayPoint((138,54))
+robot.navigateToWayPoint((138,168))
+robot.navigateToWayPoint((114,168))
+robot.navigateToWayPoint((114,84))
+robot.navigateToWayPoint((84,84))
+robot.navigateToWayPoint((84,30))
+
 interface.terminate()
 #END
