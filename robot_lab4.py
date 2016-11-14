@@ -1,4 +1,3 @@
-
 import brickpi
 import random
 import time
@@ -71,7 +70,6 @@ class Robot:
 			self.navigateToWaypoint(a,b)
 		
 		
-	
 	def createParticlesList(self):
 		for i in range(0,self.noOfParticles):
 			self.particles_list.append(Particle.Particle())
@@ -149,12 +147,14 @@ class Robot:
 	# conversion functions
 	def distToAngle(self, dist):
 		#41.5 - w/ wheels
-		angle = float(dist * 15.0)/41 
+		#41 with bumper
+		angle = float(dist * 15.0)/40 
 		return angle
 	
 	def rotAngleToMotorAngle(self, rotationAngle):
 		#4.55 - w/ wheels
-		return float(rotationAngle * 4.85) / 90.0
+		#4.85 - w/ rear bumper
+		return float(rotationAngle * 4.75) / 90.0
 		
 
 	# other member functions
@@ -439,7 +439,7 @@ class Robot:
 		self.normaliseParticlesList()
 		#print("particle weights before resampling: ")
                 #self.printParticleWeights()
-		#self.resampleParticlesList()
+		self.resampleParticlesList()
 		#print("particle weights after resampling: ")
                #self.printParticleWeights()
 
@@ -490,13 +490,17 @@ class Robot:
 			# find intersectiopn with cumulative array
 			# and add to the resampled list
 			for i in range(len(cumulative_weights)):
-				if(randomWeight >= cumulative_weights[i-1] and  randomWeight < cumulative_weights[i]):
-					resampled_particle = self.particles_list[i]
-					resampled_particle.weight = new_weight
-					resampled_particles_list.append(resampled_particle)
+				if(randomWeight >= cumulative_weights[i-1] and  randomWeight <= cumulative_weights[i]):
+					resampled_particles_list.append(Particle.Particle())
+					j=len(resampled_particles_list) - 1
+					resampled_particles_list[j].x = self.particles_list[i].x
+					resampled_particles_list[j].y = self.particles_list[i].y
+					resampled_particles_list[j].theta = self.particles_list[i].theta
+					resampled_particles_list[j].weight = new_weight
 					break
 
-			#print("new size: " + str(len(resampled_particles_list)))
+
+			print("new size: " + str(len(resampled_particles_list)))
 
 		# reassign the no. of particles 
 		self.particles_list = copy.deepcopy(resampled_particles_list)
@@ -509,8 +513,20 @@ class Robot:
 # main
 robot = Robot()
 
-#robot.moveForwards(0)
+#robot.moveForwards(10)
 
-robot.readWayPoints("waypoints.txt")
+robot.Right90deg()
+robot.Right90deg()
+robot.Right90deg()
+robot.Right90deg()
+
+time.sleep(15)
+
+robot.Left90deg()
+robot.Left90deg()
+robot.Left90deg()
+robot.Left90deg()
+
+#robot.readWayPoints("waypoints.txt")
 interface.terminate()
 #END
