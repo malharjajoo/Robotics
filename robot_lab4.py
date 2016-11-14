@@ -1,9 +1,12 @@
+
 import brickpi
+import random
 import time
 import CircularBuffer
 import Particle
 import math
 import Map
+import copy 
 
 interface = None
 
@@ -14,10 +17,8 @@ class Robot:
 	touch_ports = [0,1]
 	sonar_port = 3
 	usSensorBuffer = CircularBuffer.CircularBuffer()
-	noOfParticles = 100
+	noOfParticles = 10
 	particles_list = []
-	x = 0
-	y = 0
 	theta = 0
 
 	def __init__(self):
@@ -47,16 +48,37 @@ class Robot:
 
 		self.createParticlesList()
 		#temp draw debug, remove after
-		#self.printParticles()
-		#time.sleep(2)
-		#for i in range(0,4):
-		#    for i in range(0,4):
-		#        self.updatePosition(10,0)
-		#    self.updatePosition(0,-90)
+		self.printParticles()
+		time.sleep(0.5)
+		#self.updatePosition(160,0)
+		#self.updatePosition(0,90)
+		#self.updatePosition(34,0)
+			
+	def readWayPoints(self,filename):
+		f = open(filename)
+		input = f.read()
+
+		pointList = list(map(int,input.split()))
+		
+		n = pointList[0]
+		self.x = pointList[1]
+		self.y = pointList[2]
+
+		pointList = pointList[3:]
+
+		pointList = list(zip(pointList[0:2*n:2],pointList[1:2*n:2]))
+		for a,b in pointList:
+			self.navigateToWaypoint(a,b)
+		
+		
 	
 	def createParticlesList(self):
 		for i in range(0,self.noOfParticles):
 			self.particles_list.append(Particle.Particle())
+			self.particles_list[i].x = 84
+			self.particles_list[i].y = 30
+			self.particles_list[i].theta = 0
+			self.particles_list[i].weight = 1.0/float(self.noOfParticles)
 
 	# movement functions
 	def setSpeed(self, newSpeed):
@@ -247,25 +269,27 @@ class Robot:
 			if(angle!=0):
 				particle.updateAngleRandom(angle)
 
-		self.printParticles()
+	def printParticles(self, justList = False):
+		if justList == False:
+			drawScale = 3    # Used to scale the particle positions on the screen
+			origin = (10,250)
+			Map.map.draw(origin, drawScale)
+			#draw origin
+			oLen = 5
+			print "drawLine:" + str(((origin[0]-oLen)*drawScale,origin[1]*drawScale,
+				(origin[0]+oLen)*drawScale,origin[1]*drawScale))
+			print "drawLine:" + str((origin[0]*drawScale,(origin[1]-oLen)*drawScale,
+				origin[0]*drawScale,(origin[1]+oLen)*drawScale))
 
-	def printParticles(self):
-		drawScale = 3    # Used to scale the particle positions on the screen
-		origin = (10,400)
-		Map.map.draw(origin, drawScale)
-		#draw origin
-		oLen = 5
-		print "drawLine:" + str(((origin[0]-oLen)*drawScale,origin[1]*drawScale,
-			(origin[0]+oLen)*drawScale,origin[1]*drawScale))
-		print "drawLine:" + str((origin[0]*drawScale,(origin[1]-oLen)*drawScale,
-			origin[0]*drawScale,(origin[1]+oLen)*drawScale))
+			p = []
+			for particle in self.particles_list:
+				p.append(((origin[0]+particle.x)*drawScale,(origin[1]-particle.y)*drawScale,-particle.theta))
 
+			print "drawParticles:" + str(p)
 		p = []
 		for particle in self.particles_list:
-			p.append(((origin[0]+particle.x)*drawScale,(origin[1]-particle.y)*drawScale,-particle.theta))
-
-		print "drawParticles:" + str(p)
-		#print p    
+			p.append((particle.x,particle.y,particle.theta))
+		print p
 		time.sleep(1)
 				 
 	def moveSquare40Stop10(self):
@@ -275,8 +299,16 @@ class Robot:
 			self.rotateLeft(90)
 
 	def updatePosition(self, distance, angle):
+		print("before: ")
+		#for p in self.particles_list:
+			#print((p.x,p.y,p.theta))
 		self.updateParticlePositions(distance, angle)
+		print("after: ")
+		
 		self.updateWeights()
+		for p in self.particles_list:
+			print((p.x,p.y,p.theta))
+		self.printParticles()
 		x_sum = 0
 		y_sum = 0
 		theta_sum = 0
@@ -289,6 +321,7 @@ class Robot:
 		self.x = x_sum 
 		self.y = y_sum 
 		self.theta = theta_sum
+		print("current robot pos: " + str((x_sum, y_sum, theta_sum)))		
 
 	def navigateToWaypoint(self, x, y):
 			b = math.sqrt((self.x-x)*(self.x-x) + (self.y-y)*(self.y-y))
@@ -317,7 +350,7 @@ class Robot:
 			self.moveForwards(b)
 		
 
-	def calculate_likelihood(x, y, theta, z):
+	def calculate_likelihood(self,x, y, theta, z):
 		m_list = []
 		for wall in Map.map.walls:
 			#A = x1,y1; B = x2,y2
@@ -326,9 +359,13 @@ class Robot:
 			y1 = wall[1]
 			x2 = wall[2]
 			y2 = wall[3]
-			temp = ((y2-y1)*(x1-x) - (x2 - x1)*(y1 - y))/((y2 - y1)*math.cos(math.radians(theta)) - (x2 - x1)*math.sin(math.radians(theta)))
-			m_list.append(temp)
-		min_m = math.inf
+			#print ("current wall:" + str(wall))
+			if ((y2 == y1 and (theta % 180 == 0)) or (x2 == x1 and (theta % 180 == 90))):
+				m = -1
+			else:
+				m = float( ((y2-y1)*(x1-x)) - ((x2 - x1)*(y1 - y)) ) / float( ((y2 - y1)*math.cos(math.radians(theta))) - ((x2 - x1)*math.sin(math.radians(theta))) )
+			m_list.append(m)
+		min_m = 9999
 		min_m_index = 0
 		for i in range(len(m_list)):
 			if (m_list[i] >= 0 and m_list[i] < min_m):
@@ -340,8 +377,8 @@ class Robot:
 				intersect_x = x + m_list[i]*math.cos(math.radians(theta))
 				intersect_y = y + m_list[i]*math.sin(math.radians(theta))
 				# check if intersection is within wall region
-				if (intersect_x >= math.min(x1, x2)) and (intersect_x <= math.max(x1, x2)):
-					if( (intersect_y >= math.min(y1, y2)) and (intersect_y <= math.max(y1, y2)) ):
+				if (intersect_x >= min(x1, x2)) and (intersect_x <= max(x1, x2)):
+					if( (intersect_y >= min(y1, y2)) and (intersect_y <= max(y1, y2)) ):
 						min_m = m_list[i]
 						min_m_index = i
 		current_wall = Map.map.walls[min_m_index]
@@ -350,10 +387,10 @@ class Robot:
 		x2 = current_wall[2]
 		y2 = current_wall[3]
 		k = 1.0
-		sigma_s = 1
+		sigma_s = 1		
+
 		#p(z|m)
-		prob = k*math.exp((-(z-m_min)*(z-m_min))/(2*sigma_s*sigma_s))
-		
+		prob = k*math.exp((-(z-min_m)*(z-min_m))/(2*sigma_s*sigma_s))
 		angle_of_incidence = math.degrees(
 			math.acos(
 				(
@@ -368,16 +405,21 @@ class Robot:
 			)
 		)
 
-		if angle_of_incidence < 49 and m_min < 110:
+		if angle_of_incidence < 49 and min_m < 110:
 			return prob
 		else:
 			return -1
 
+	def printParticleWeights(self):
+		for p in self.particles_list:
+			print(p.weight)
+
 	def updateWeights(self):
-		z = self.readUsSensor()
+		z = self.readUsSensor(self.usSensorBuffer)
+		#print("Before updating...")
+		#self.printParticles(True)
 		error_count = 0
-		
-		particles_list_copy = copy.deepcopy(self.particles_list)
+		particles_list_copy = list(self.particles_list)
 
 		for particle in self.particles_list:
 			prob = self.calculate_likelihood(particle.x,particle.y,particle.theta, z)
@@ -385,31 +427,45 @@ class Robot:
 				error_count += 1
 			else:
 				particle.weight = particle.weight * prob
+				print("particle_weight = "+str(particle.weight))
 
 		if(error_count > self.noOfParticles/4):
-			self.particles_list = copy.deepcopy(particles_list_copy)
-		
-		self.normaliseParticleList()
-		self.resampleParticlesList()
+			print("ERROR REACHED")
+			self.particles_list = list(particles_list_copy)
+		#print("After updating weights:")
+		#self.printParticles(True)
+		#time.sleep(1)
+		#self.printParticles()
+		self.normaliseParticlesList()
+		#print("particle weights before resampling: ")
+                #self.printParticleWeights()
+		#self.resampleParticlesList()
+		#print("particle weights after resampling: ")
+               #self.printParticleWeights()
 
 	#particle weights normalized so that they all add to 1
-	def normaliseParticleList(self):
+	def normaliseParticlesList(self):
 		weightSum = 0 
 		for particle in self.particles_list:
-			weightSum += particle.weight 
-			
-		for particle in self.particles_list:  
-			particle.weight = float(particle.weight) /float(weightSum )
+			print("adding weight..." + str(particle.weight))
+			weightSum += particle.weight
+		print("weightSum = "+str(weightSum))
+		
+		if weightSum != 0:
+			for particle in self.particles_list:  
+				particle.weight = float(particle.weight) /float(weightSum )
+		else:
+			for particle in self.particles_list:  
+				particle.weight = 1/float(self.noOfParticles)
 
 	def getCumulativeWeights(self):
 		
-		cumulative_weights =[0]*len(self.particles_list)
+		cumulative_weights = []
 
 		sum = 0 
-		for i in range(len(self.particles_list)):
-			
-			sum += self.particles_list[i].weight
-			cumulative_weights[i] = sum 
+		for p in self.particles_list:
+			sum += p.weight
+			cumulative_weights.append(sum) 
 		print("cumulative WEifht list = ",cumulative_weights)
 		print("last one should be 1=",cumulative_weights[self.noOfParticles-1])	
 		
@@ -418,29 +474,33 @@ class Robot:
 	# input - old particle weights
 	# output - new particles with same normalized weight
 	def resampleParticlesList(self):
+		#print("Size of current particles list: " + str(len(self.particles_list)))
 		
 		cumulative_weights = self.getCumulativeWeights()
 		
-		new_weight = 1/float(self.noOfParticles)
+		new_weight = 1.0/float(self.noOfParticles)
 
 		resampled_particles_list = []
 
 		# fill the resampled list
-		for i in range(self.noOfParticles):
+		while len(resampled_particles_list) < self.noOfParticles:
 			
 			randomWeight = random.random()
 			
 			# find intersectiopn with cumulative array
 			# and add to the resampled list
 			for i in range(len(cumulative_weights)):
-				if(randomWeight >= cumulative_weights[i-1] and  randomWeight < cumulativ_weights[i]):
-					print("intersection foudn")
+				if(randomWeight >= cumulative_weights[i-1] and  randomWeight < cumulative_weights[i]):
 					resampled_particle = self.particles_list[i]
 					resampled_particle.weight = new_weight
-					resamped_particles_list.append(resampled_particle)
+					resampled_particles_list.append(resampled_particle)
+					break
+
+			#print("new size: " + str(len(resampled_particles_list)))
 
 		# reassign the no. of particles 
 		self.particles_list = copy.deepcopy(resampled_particles_list)
+		#print("Size of resampled particles list: " + str(len(self.particles_list)))
 
 
 
@@ -451,15 +511,6 @@ robot = Robot()
 
 #robot.moveForwards(0)
 
-robot.navigateToWayPoint((84,30))
-robot.navigateToWayPoint((180,30))
-robot.navigateToWayPoint((180,54))
-robot.navigateToWayPoint((138,54))
-robot.navigateToWayPoint((138,168))
-robot.navigateToWayPoint((114,168))
-robot.navigateToWayPoint((114,84))
-robot.navigateToWayPoint((84,84))
-robot.navigateToWayPoint((84,30))
-
+robot.readWayPoints("waypoints.txt")
 interface.terminate()
 #END
