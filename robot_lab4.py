@@ -16,7 +16,7 @@ class Robot:
 	touch_ports = [0,1]
 	sonar_port = 3
 	usSensorBuffer = CircularBuffer.CircularBuffer()
-	noOfParticles = 10
+	noOfParticles = 100
 	particles_list = []
 	theta = 0
 
@@ -134,6 +134,7 @@ class Robot:
 			self.updatePosition(-distance, 0)
 
 	def rotateRight(self, rotAngle):
+		print("NOW ROTATING RIGHT")
 		angle = self.rotAngleToMotorAngle(rotAngle)
 		self.increaseMotorAngle(angle, -angle)
 		self.updatePosition(0,-rotAngle)
@@ -169,6 +170,7 @@ class Robot:
 			self.moveForwards(distance)
 			self.Left90deg()
 			time.sleep(0.05)
+	
 	
 	def checkSensors(self, touch_port):
 		result=interface.getSensorValue(touch_port)
@@ -219,8 +221,6 @@ class Robot:
 				break
 			else:
 				motorAngles = interface.getMotorAngles(self.motors)
-				#if motorAngles :
-				#print "Motor angles: ", motorAngles[0][0], ", ", motorAngles[1][0]
 
 
 	def readUsSensor(self, circularBuffer):
@@ -229,22 +229,22 @@ class Robot:
 		if usReading:
 			print(usReading)
 		else:
-			print "Failed US Reading"
+			print "Failed to get Sonar reading."
 		circularBuffer.add(usReading[0])
-		#print circularBuffer.circularBuffer
+		
 		return circularBuffer.getMedian()
 
 	def MoveForwardsWithSonar(self, safeDistance):
 		while True:
 			usReading = self.readUsSensor(self.usSensorBuffer)    #returns the median of the circular buffer
-			print "median=",usReading
+			#print "median=",usReading
 			error = usReading - safeDistance
 			k = float(error)/30.0    #k gain - adjust for different smoothness
 			if k > 1:
 				k = 1
 			if k < -1:
 				k = -1
-			print "k=",k
+			#print "k=",k
 			self.setMotorRotationSpeed(k*self.speed, k*self.speed)
 
 		
@@ -299,11 +299,11 @@ class Robot:
 			self.rotateLeft(90)
 
 	def updatePosition(self, distance, angle):
-		print("before: ")
+	
 		#for p in self.particles_list:
 			#print((p.x,p.y,p.theta))
 		self.updateParticlePositions(distance, angle)
-		print("after: ")
+		
 		
 		self.updateWeights()
 		for p in self.particles_list:
@@ -321,7 +321,7 @@ class Robot:
 		self.x = x_sum 
 		self.y = y_sum 
 		self.theta = theta_sum
-		print("current robot pos: " + str((x_sum, y_sum, theta_sum)))		
+		print("CURRENT ROBOT POS: " + str((x_sum, y_sum, theta_sum)))		
 
 	def navigateToWaypoint(self, x, y):
 			b = math.sqrt((self.x-x)*(self.x-x) + (self.y-y)*(self.y-y))
@@ -337,16 +337,19 @@ class Robot:
 			
 			if (newAngle>=-180) and (newAngle<0):
 				self.rotateRight(abs(newAngle))
-				#print("angle to rotate right by: " + str(abs(newAngle)))
+				
+
 			elif (newAngle<180) and (newAngle>=0):
 				self.rotateLeft(newAngle)
-				#print("angle to rotate left by: " + str(newAngle))
+
+				
 			elif (newAngle>=180) and (newAngle<360):
 				self.rotateRight(360-newAngle)
-				#print("angle to rotate right by: " + str(360-newAngle))
+
+	
 			elif (newAngle<-180) and (newAngle>-360):
 				self.rotateLeft(360+newAngle)
-				#print("angle to rotate left by: " + str(360+newAngle))
+				
 			self.moveForwards(b)
 		
 
@@ -386,7 +389,7 @@ class Robot:
 		y1 = current_wall[1]
 		x2 = current_wall[2]
 		y2 = current_wall[3]
-		k = 1.0
+		k = 100.0
 		sigma_s = 1		
 
 		#p(z|m)
@@ -405,7 +408,8 @@ class Robot:
 			)
 		)
 
-		if angle_of_incidence < 49 and min_m < 110:
+		if angle_of_incidence < 49 and min_m < 160:
+			
 			return prob
 		else:
 			return -1
@@ -424,14 +428,19 @@ class Robot:
 		for particle in self.particles_list:
 			prob = self.calculate_likelihood(particle.x,particle.y,particle.theta, z)
 			if prob == -1:
+				print("out of sonar calibration range")
 				error_count += 1
 			else:
 				particle.weight = particle.weight * prob
-				print("particle_weight = "+str(particle.weight))
+				#print("particle_weight = "+str(particle.weight))
 
 		if(error_count > self.noOfParticles/4):
 			print("ERROR REACHED")
-			self.particles_list = list(particles_list_copy)
+			self.particles_list = copy.deepcopy(particles_list_copy)
+			n = float(1)/(self.noOfParticles)
+			for particle in self.particles_list :
+	
+				particle.weight  = n
 		#print("After updating weights:")
 		#self.printParticles(True)
 		#time.sleep(1)
@@ -447,9 +456,9 @@ class Robot:
 	def normaliseParticlesList(self):
 		weightSum = 0 
 		for particle in self.particles_list:
-			print("adding weight..." + str(particle.weight))
+		#	print("adding weight..." + str(particle.weight))
 			weightSum += particle.weight
-		print("weightSum = "+str(weightSum))
+	#	print("weightSum = "+str(weightSum))
 		
 		if weightSum != 0:
 			for particle in self.particles_list:  
@@ -466,8 +475,8 @@ class Robot:
 		for p in self.particles_list:
 			sum += p.weight
 			cumulative_weights.append(sum) 
-		print("cumulative WEifht list = ",cumulative_weights)
-		print("last one should be 1=",cumulative_weights[self.noOfParticles-1])	
+		
+		print("last one of cumulative weight list should be 1=",cumulative_weights[self.noOfParticles-1])	
 		
 		return cumulative_weights
 
@@ -500,8 +509,7 @@ class Robot:
 					break
 
 
-			print("new size: " + str(len(resampled_particles_list)))
-
+			
 		# reassign the no. of particles 
 		self.particles_list = copy.deepcopy(resampled_particles_list)
 		#print("Size of resampled particles list: " + str(len(self.particles_list)))
@@ -515,18 +523,6 @@ robot = Robot()
 
 #robot.moveForwards(10)
 
-robot.Right90deg()
-robot.Right90deg()
-robot.Right90deg()
-robot.Right90deg()
-
-time.sleep(15)
-
-robot.Left90deg()
-robot.Left90deg()
-robot.Left90deg()
-robot.Left90deg()
-
-#robot.readWayPoints("waypoints.txt")
+robot.readWayPoints("waypoints.txt")
 interface.terminate()
 #END

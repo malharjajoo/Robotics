@@ -57,7 +57,7 @@ class Robot:
 		if distance<0:
 			self.setMotorRotationSpeed(self.speed, self.speed)
 			while True:
-
+				
 				if self.checkSensors(self.touch_ports[0]) and not  self.checkSensors(self.touch_ports[1]):    
 					self.reverseForkRight(90)
 					self.setMotorRotationSpeed(self.speed, self.speed)
@@ -86,6 +86,15 @@ class Robot:
 		angle = self.rotAngleToMotorAngle(rotAngle)
 		self.increaseMotorAngle(-angle, angle)
 		self.updatePosition(0, rotAngle)
+
+        def checkSensors(self, touch_port):
+                result=interface.getSensorValue(touch_port)
+                if result:
+                        touched=result[0]
+                else:
+                        touched=0
+
+                return touched
 
 	def navigateToWaypoint(self, x, y):
 		b = math.sqrt((self.x-x)*(self.x-x) + (self.y-y)*(self.y-y))
@@ -395,18 +404,6 @@ robot = Robot()
 
 #robot.moveForwards(10)
 
-robot.Right90deg()
-robot.Right90deg()
-robot.Right90deg()
-robot.Right90deg()
-
-time.sleep(15)
-
-robot.Left90deg()
-robot.Left90deg()
-robot.Left90deg()
-robot.Left90deg()
-
-#robot.readWayPoints("waypoints.txt")
+robot.readWayPoints("waypoints.txt")
 interface.terminate()
 #END
