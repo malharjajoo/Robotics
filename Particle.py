@@ -13,7 +13,7 @@ class Particle:
 	def updateDistanceRandom(self, distance):
 		#e = random.gauss(0,1) * (float(distance)/10.0)
 		#f =  random.gauss(0,1) * (float(distance)/10.0)
-		e = random.gauss(0, math.sqrt(float(distance)/10.0)) # change divisor to change spreading
+		e = random.gauss(0, math.sqrt(float(distance)/15.0)) # change divisor to change spreading
 		f = random.gauss(0, math.sqrt(float(distance)/15.0)) # change divisor to change spreading
 		#print("old x is "+str(self.x))
 		#print("old y is "+str(self.y))
@@ -38,8 +38,8 @@ class Particle:
 	def updateAngleRandom(self, angle):
 		#g =  random.gauss(0,1) *( float(angle)/360.0)
 		#print("g = " + str(g))
-		#g = random.gauss(0, math.sqrt(float(angle)/180.0))
-		self.theta = self.theta + angle  + 0
+		g = random.gauss(0, math.sqrt(float(abs(angle))/90.0))
+		self.theta = self.theta + angle  + g
 		
 		#if self.theta < 0:
 		#	self.theta += 360

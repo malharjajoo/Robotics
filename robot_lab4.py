@@ -161,7 +161,7 @@ class Robot:
 	def rotAngleToMotorAngle(self, rotationAngle):
 		#4.55 - w/ wheels
 		#4.85 - w/ rear bumper
-		return float(rotationAngle * 4.75) / 90.0
+		return float(rotationAngle * 4.85) / 90.0
 		
 
 	# other member functions
@@ -331,33 +331,49 @@ class Robot:
 
 	def navigateToWaypoint(self, x, y):
 			b = math.sqrt((self.x-x)*(self.x-x) + (self.y-y)*(self.y-y))
-			new_x=x-self.x
-			new_y=y-self.y
-			rel_angle=math.degrees(math.atan2(float(new_y), float(new_x)))
+
+			while b > 0:
+                                       
+
+
+				new_x=x-self.x
+				new_y=y-self.y
+				rel_angle=math.degrees(math.atan2(float(new_y), float(new_x)))
 
 			
-			theta=self.theta%360
+				theta=self.theta%360
 
-			newAngle=rel_angle-theta
+				newAngle=rel_angle-theta
 			
 			
-			if (newAngle>=-180) and (newAngle<0):
-				self.rotateRight(abs(newAngle))
+				if (newAngle>=-180) and (newAngle<0):
+					self.rotateRight(abs(newAngle))
 				
 
-			elif (newAngle<180) and (newAngle>=0):
-				self.rotateLeft(newAngle)
+				elif (newAngle<180) and (newAngle>=0):
+					self.rotateLeft(newAngle)
 
 				
-			elif (newAngle>=180) and (newAngle<360):
-				self.rotateRight(360-newAngle)
+				elif (newAngle>=180) and (newAngle<360):
+					self.rotateRight(360-newAngle)
 
 	
-			elif (newAngle<-180) and (newAngle>-360):
-				self.rotateLeft(360+newAngle)
+				elif (newAngle<-180) and (newAngle>-360):
+					self.rotateLeft(360+newAngle)
+
+				if b > 20:
+                                	b = b-20
+                               		self.moveForwards(20)
+				else :
+					self.moveForwards(b)
+					b = 0
+                                
+        			
+
+
+				#b = math.sqrt((self.x-x)*(self.x-x) + (self.y-y)*(self.y-y))
 				
-			self.moveForwards(b)
-		
+					
 
 	def calculate_likelihood(self,x, y, theta, z):
 		m_list = []
@@ -531,5 +547,9 @@ robot = Robot()
 #robot.moveForwards(10)
 
 robot.readWayPoints("waypoints.txt")
+
+#for i in range(0,4):
+#	robot.rotateRight(90)
+
 interface.terminate()
 #END
