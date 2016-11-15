@@ -33,7 +33,7 @@ class Robot:
 		motorParams.maxRotationAcceleration = 6.0
 		motorParams.maxRotationSpeed = 12.0
 		motorParams.feedForwardGain = 255/20.0
-		motorParams.minPWM = 3.0
+		motorParams.minPWM = 8.0
 		motorParams.pidParameters.minOutput = -255
 		motorParams.pidParameters.maxOutput = 255
 		#position ctrl: 517, 1000, 13
@@ -67,9 +67,14 @@ class Robot:
 
 		pointList = list(zip(pointList[0:2*n:2],pointList[1:2*n:2]))
 		for a,b in pointList:
-			self.navigateToWaypoint(a,b)
+			print ("next waypoint: " + str(a) + "," + str(b))
+			while self.getDistance(a,b) > 1.0:
+				self.navigateToWaypoint(a,b)
 		
 		
+	def getDistance(self,x,y):
+		return math.sqrt(float((self.x-x)*(self.x-x)) + float((self.y-y)*(self.y-y)))
+	
 	def createParticlesList(self):
 		for i in range(0,self.noOfParticles):
 			self.particles_list.append(Particle.Particle())
@@ -140,6 +145,7 @@ class Robot:
 		self.updatePosition(0,-rotAngle)
 
 	def rotateLeft(self, rotAngle):
+		print ("NOW ROTATING LEFT")
 		angle = self.rotAngleToMotorAngle(rotAngle)
 		self.increaseMotorAngle(-angle, angle)
 		self.updatePosition(0, rotAngle)
@@ -204,7 +210,7 @@ class Robot:
 		motorParams.maxRotationAcceleration = 6.0
 		motorParams.maxRotationSpeed = 12.0
 		motorParams.feedForwardGain = 255/20.0
-		motorParams.minPWM = 3.0
+		motorParams.minPWM = 8.0
 		motorParams.pidParameters.minOutput = -255
 		motorParams.pidParameters.maxOutput = 255
 		#517 , 1000,13        
@@ -289,7 +295,7 @@ class Robot:
 		p = []
 		for particle in self.particles_list:
 			p.append((particle.x,particle.y,particle.theta))
-		print p
+		#print p
 		time.sleep(1)
 				 
 	def moveSquare40Stop10(self):
@@ -306,8 +312,8 @@ class Robot:
 		
 		
 		self.updateWeights()
-		for p in self.particles_list:
-			print((p.x,p.y,p.theta))
+#		for p in self.particles_list:
+#			print((p.x,p.y,p.theta))
 		self.printParticles()
 		x_sum = 0
 		y_sum = 0
@@ -355,6 +361,8 @@ class Robot:
 
 	def calculate_likelihood(self,x, y, theta, z):
 		m_list = []
+		if z == 255:
+			return -1
 		for wall in Map.map.walls:
 			#A = x1,y1; B = x2,y2
 			#m: lecture 5 slide 18
@@ -385,12 +393,13 @@ class Robot:
 						min_m = m_list[i]
 						min_m_index = i
 		current_wall = Map.map.walls[min_m_index]
+		#print("current wall =",current_wall)
 		x1 = current_wall[0]
 		y1 = current_wall[1]
 		x2 = current_wall[2]
 		y2 = current_wall[3]
 		k = 100.0
-		sigma_s = 1		
+		sigma_s = 0.5
 
 		#p(z|m)
 		prob = k*math.exp((-(z-min_m)*(z-min_m))/(2*sigma_s*sigma_s))
@@ -408,39 +417,37 @@ class Robot:
 			)
 		)
 
-		if angle_of_incidence < 49 and min_m < 160:
-			
+		if angle_of_incidence < 49:
 			return prob
 		else:
+			#print("angle of incidence greater than 49")
 			return -1
+			#return prob
 
 	def printParticleWeights(self):
 		for p in self.particles_list:
 			print(p.weight)
 
 	def updateWeights(self):
-		z = self.readUsSensor(self.usSensorBuffer)
+		for i in range(5):
+			z = self.readUsSensor(self.usSensorBuffer)
 		#print("Before updating...")
 		#self.printParticles(True)
 		error_count = 0
-		particles_list_copy = list(self.particles_list)
+		particles_list_copy = copy.deepcopy(self.particles_list)
 
 		for particle in self.particles_list:
 			prob = self.calculate_likelihood(particle.x,particle.y,particle.theta, z)
 			if prob == -1:
-				print("out of sonar calibration range")
+				#print("out of sonar calibration range")
 				error_count += 1
 			else:
 				particle.weight = particle.weight * prob
 				#print("particle_weight = "+str(particle.weight))
 
 		if(error_count > self.noOfParticles/4):
-			print("ERROR REACHED")
+			print("Too many errors. Using old weights.")
 			self.particles_list = copy.deepcopy(particles_list_copy)
-			n = float(1)/(self.noOfParticles)
-			for particle in self.particles_list :
-	
-				particle.weight  = n
 		#print("After updating weights:")
 		#self.printParticles(True)
 		#time.sleep(1)
@@ -476,7 +483,7 @@ class Robot:
 			sum += p.weight
 			cumulative_weights.append(sum) 
 		
-		print("last one of cumulative weight list should be 1=",cumulative_weights[self.noOfParticles-1])	
+		#print("last one of cumulative weight list should be 1=",cumulative_weights[self.noOfParticles-1])	
 		
 		return cumulative_weights
 
