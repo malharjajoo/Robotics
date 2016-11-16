@@ -415,7 +415,7 @@ class Robot:
 		x2 = current_wall[2]
 		y2 = current_wall[3]
 		k = 100.0
-		sigma_s = 1
+		sigma_s = 0.5
 
 		#p(z|m)
 		prob = k*math.exp((-(z-min_m)*(z-min_m))/(2*sigma_s*sigma_s))
@@ -549,8 +549,7 @@ robot = Robot()
 robot.readWayPoints("waypoints.txt")
 
 #for i in range(0,4):
-
-##	robot.rotateRight(90)
+#	robot.rotateRight(90)
 
 interface.terminate()
 #END
