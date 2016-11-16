@@ -15,7 +15,8 @@ class LocationSignature:
             print self.sig[i]
 
 # --------------------- File management class ---------------
-class SignatureContainer():
+class SignatureContainer:
+
     def __init__(self, size = 5):
         self.size      = size; # max number of signatures that can be stored
         self.filenames = [];
@@ -104,6 +105,7 @@ def learn_location():
     signatures.save(ls,idx)
     print "STATUS:  Location " + str(idx) + " learned and saved."
 
+#==============================================================================
 # This function tries to recognize the current location.
 # 1.   Characterize current location
 # 2.   For every learned locations
@@ -112,6 +114,7 @@ def learn_location():
 # 3.   Retain the learned location whose minimum distance with
 #      actual characterization is the smallest.
 # 4.   Display the index of the recognized location on the screen
+
 """
 def recognize_location():
     ls_obs = LocationSignature();
@@ -128,6 +131,7 @@ def recognize_location():
 # Then, either learn a location, until all the locations are learned, or try to
 # recognize one of them, if locations have already been learned.
 """
+
 signatures = SignatureContainer(5);
 #signatures.delete_loc_files()
 
