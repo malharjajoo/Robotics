@@ -1,10 +1,10 @@
 import brickpi
 import random
 import time
-import DataStructures.CircularBuffer
-import DataStructures.Particle
+from DataStructures import CircularBuffer
+from DataStructures import Particle
 import math
-import DataStructures.Map
+from DataStructures import Map
 import copy 
 
 
@@ -13,7 +13,7 @@ interface = None
 class Robot:
 	# attributes - ideally different components (motors, ultrasonic sensor, etc)
 	motors = [0,1]
-	sonar_motor_port = 2
+	sonar_motor_port = [2,3]
 
 	touch_ports = [0,1]
 
@@ -32,7 +32,7 @@ class Robot:
 		interface.initialize()
 		interface.motorEnable(self.motors[0])
 		interface.motorEnable(self.motors[1])
-		interface.motorEnable(self.sonar_motor_port)
+		interface.motorEnable(self.sonar_motor_port[0])
 
 		interface.sensorEnable(self.touch_ports[0], brickpi.SensorType.SENSOR_TOUCH)
 		interface.sensorEnable(self.touch_ports[1], brickpi.SensorType.SENSOR_TOUCH)
@@ -51,10 +51,8 @@ class Robot:
 		motorParams.pidParameters.k_d = 13
 
 		interface.setMotorAngleControllerParameters(self.motors[0],motorParams)
-		interface.setMotorAngleControllerParameters(self.motors[1],motorParams) 
-
-
-		interface.setMotorAngleControllerParameters(self.sonar_motor_port,motorParams)     
+		interface.setMotorAngleControllerParameters(self.motors[1],motorParams)
+		interface.setMotorAngleControllerParameters(self.sonar_motor_port[0],motorParams)     
 
 		self.createParticlesList()
 		#temp draw debug, remove after
@@ -113,7 +111,7 @@ class Robot:
 		print("NOW ROTATING RIGHT")
 		angle = self.rotAngleToMotorAngle(rotAngle)
 		self.increaseMotorAngle(angle, -angle)
-		self.updatePosition(0,-rotAngle)
+		#self.updatePosition(0,-rotAngle)
 
 	def rotateLeft(self, rotAngle):
 		print ("NOW ROTATING LEFT")
@@ -224,8 +222,8 @@ class Robot:
 		motorParams.pidParameters.k_p = 100
 		motorParams.pidParameters.k_i = 0
 		motorParams.pidParameters.k_d = 0
-		interface.setMotorAngleControllerParameters(self.sonar_motor_port,motorParams)
-		interface.setMotorRotationSpeedReferences(self.sonar_motor_port, speed)
+		interface.setMotorAngleControllerParameters(self.sonar_motor_port[0],motorParams)
+		interface.setMotorRotationSpeedReferences(self.sonar_motor_port, [speed, 0])
 
 	#wrapper for motor rotation
 	def increaseMotorAngle(self, angle1, angle2):
@@ -250,6 +248,25 @@ class Robot:
 				break
 			else:
 				motorAngles = interface.getMotorAngles(self.motors)
+
+	def increaseMotorSonarAngle(self, angle):
+		motorParams = interface.MotorAngleControllerParameters()
+		motorParams.maxRotationAcceleration = 6.0
+		motorParams.maxRotationSpeed = 12.0
+		motorParams.feedForwardGain = 255/20.0
+		motorParams.minPWM = 8.0
+		motorParams.pidParameters.minOutput = -255
+		motorParams.pidParameters.maxOutput = 255
+		#517 , 1000,13        
+		motorParams.pidParameters.k_p = 517
+		motorParams.pidParameters.k_i = 1000
+		motorParams.pidParameters.k_d = 13
+		interface.setMotorAngleControllerParameters(self.sonar_motor_port[0],motorParams)
+
+		interface.increaseMotorAngleReferences(self.sonar_motor_port,[angle,0])
+
+		while not interface.motorAngleReferencesReached(self.motors) :
+				motorAngles = interface.getMotorAngles(self.sonar_motor_port)
 
 
 	#Sensor Functions
@@ -528,16 +545,23 @@ class Robot:
 
 	#Place Recognition Functions
 	#def characterize_location(ls):
-	def characterize_location():
-		self.setMotorSonarRotationSpeed(6)
+	sonar_motor_direction  = 1
+	def characterize_location(self):
+		
+		
+		self.setMotorSonarRotationSpeed(6 * self.sonar_motor_direction)
 
 		for i in range(360):
 		#for i in range(len(ls.sig)):
 			b = 1
-			time.sleep(0.1)
+			time.sleep(0.0045)
 			
-		interface.setMotorPwm(self.sonar_motor_port, 0)
-
+		interface.setMotorPwm(self.sonar_motor_port[0], 0)
+		self.sonar_motor_direction = self.sonar_motor_direction * -1
+		
+		#for i in range(360):
+		#	self.increaseMotorSonarAngle(1)
+	
 
 
 # ===============================End of Robot Class =================
@@ -552,8 +576,9 @@ robot = Robot()
 #for i in range(0,4):
 
 ##	robot.rotateRight(90)
-
-robot.characterize_location()
+while True:
+	robot.characterize_location()
+	time.sleep(0.5)
 
 interface.terminate()
 #END
