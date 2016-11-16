@@ -541,16 +541,16 @@ class Robot:
 		# reassign the no. of particles 
 		self.particles_list = copy.deepcopy(resampled_particles_list)
 
-
+#=========================Place recognition functions================================================
 
 	#Place Recognition Functions
 	#def characterize_location(ls):
 	sonar_motor_direction  = 1
-	def characterize_location(self):
+	def characterize_location(self,ls):
 		
 		
 		self.setMotorSonarRotationSpeed(6 * self.sonar_motor_direction)
-
+		"""
 		for i in range(360):
 		#for i in range(len(ls.sig)):
 			b = 1
@@ -558,9 +558,19 @@ class Robot:
 			
 		interface.setMotorPwm(self.sonar_motor_port[0], 0)
 		self.sonar_motor_direction = self.sonar_motor_direction * -1
-		
-		#for i in range(360):
-		#	self.increaseMotorSonarAngle(1)
+		"""
+		for i in range(360):
+			
+			z = self.readUsSensor(self.usSensorBuffer)
+			self.increaseMotorSonarAngle(1)
+			ls.sig[i] = z
+
+# FILL IN: spin robot or sonar to capture a signature and store it in ls
+def characterize_location(ls):
+    print "TODO:    You should implement the function that captures a signature."
+    for i in range(len(ls.sig)):
+        ls.sig[i] = random.randint(0, 255)
+
 	
 
 

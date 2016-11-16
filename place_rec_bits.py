@@ -5,15 +5,6 @@
 import random
 import os
 
-# Location signature class: stores a signature characterizing one location
-class LocationSignature:
-    def __init__(self, no_bins = 360):
-        self.sig = [0] * no_bins
-        
-    def print_signature(self):
-        for i in range(len(self.sig)):
-            print self.sig[i]
-
 # --------------------- File management class ---------------
 class SignatureContainer:
 
@@ -77,17 +68,13 @@ class SignatureContainer:
             print "WARNING: Signature does not exist."
         
         return ls
-        
-# FILL IN: spin robot or sonar to capture a signature and store it in ls
-def characterize_location(ls):
-    print "TODO:    You should implement the function that captures a signature."
-    for i in range(len(ls.sig)):
-        ls.sig[i] = random.randint(0, 255)
+
+
 
 # FILL IN: compare two signatures
 def compare_signatures(ls1, ls2):
     dist = 0
-    print "TODO:    You should implement the function that compares two signatures."
+    dist = ls1.squared_error(ls2)
     return dist
 
 # This function characterizes the current location, and stores the obtained 
