@@ -10,11 +10,11 @@ class LocationSignature:
                         print self.sig[i]
 
 	# draws it oin the graphcal web interface
-	def draw(self,map,startpoint_x = 100,startpoint_y = 250):
+	def draw(self,startpoint_x = 100,startpoint_y = 250):
+		print("drawing now...")
+		#drawScale = 3    # Used to scale the particle positions on the screen
 		
-		drawScale = 3    # Used to scale the particle positions on the screen
-		
-		map.draw(origin, drawScale)
+		#map.draw(origin, drawScale)
 		
 		for angle in range(self.sig):
 			depth = self.sig[i]
@@ -44,7 +44,7 @@ class LocationSignature:
 		dict = {}
 
 		for depth in self.sig:	
-			dict.get(depth) = dict.get(depth,0)+1
+			dict[depth] = dict.get(depth,0)+1
 
 		return dict
 		
