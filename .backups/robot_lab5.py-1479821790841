@@ -690,17 +690,14 @@ robot.waypoint2Number[3] = (138, 54)
 robot.waypoint2Number[4] = (138, 168)
 
 
-for i in range(5):
-        # Learn the 5 waypoints
-        print("PLACE ON NEXT LOCATION....")
-        time.sleep(13)
-        
-        robot.learnLocation()
-        
+# Learn the 5 waypoints
+robot.learnLocation()
+robot.learnLocation()
+robot.learnLocation()
+robot.learnLocation()
+robot.learnLocation()
 
 #Try recognizing any one of them for now
-print("PLACE ON WAYPOINT YOU WANT TO RECOGNIZE....")
-time.sleep(13)
 robot.recognizeLocation()
 
 interface.terminate()

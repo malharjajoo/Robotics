@@ -691,16 +691,16 @@ robot.waypoint2Number[4] = (138, 168)
 
 
 for i in range(5):
-        # Learn the 5 waypoints
-        print("PLACE ON NEXT LOCATION....")
-        time.sleep(13)
-        
+    # Learn the 5 waypoints
+    print("PLACE ON NEXT LOCATION....")
+    
+    print("Have you placed on the next location? yes or no ?")
+    str = input()
+    if(str == "yes"):
         robot.learnLocation()
         
 
 #Try recognizing any one of them for now
-print("PLACE ON WAYPOINT YOU WANT TO RECOGNIZE....")
-time.sleep(13)
 robot.recognizeLocation()
 
 interface.terminate()

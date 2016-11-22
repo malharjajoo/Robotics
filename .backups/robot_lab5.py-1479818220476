@@ -23,7 +23,6 @@ class Robot:
     
     usSensorBuffer = CircularBuffer.CircularBuffer()
     signatureContainer = SignatureContainer.SignatureContainer()
-    waypoint2Number = {}
 
     noOfParticles = 100
     particles_list = []
@@ -62,7 +61,6 @@ class Robot:
         #interface.setMotorAngleControllerParameters(self.sonar_motor_port[1],motorParams)  #not used
 
         self.createParticlesList()
-        
     
         #temp draw debug, remove after
         #self.printParticles()
@@ -70,7 +68,7 @@ class Robot:
         #self.updatePosition(160,0)
         #self.updatePosition(0,90)
         #self.updatePosition(34,0)
-    
+
 
 
     def setSpeed(self, newSpeed):
@@ -574,12 +572,9 @@ class Robot:
     #def characterize_location(ls):
     def learnLocation(self):
     
-       
-         
-        
         ls = LocationSignature.LocationSignature(360)
         self.characterize_location(ls)
-       
+        print(ls.sig)
         
         free_index = self.signatureContainer.get_free_index()
         if(free_index == -1):
@@ -594,8 +589,7 @@ class Robot:
       
     sonar_motor_direction  = 1
     def characterize_location(self, ls):
-        time_calibration = 0.0061
-        
+        time_calibration = 0.0057
         
         self.setMotorSonarRotationSpeed(3 * self.sonar_motor_direction)
         
@@ -626,43 +620,7 @@ class Robot:
         self.increaseMotorSonarAngle(angle, ls)
         """
         
-    # At any random waypoint
-    # output - the way point location
-    def recognizeLocation(self):
-        
-        # take a reading from the sonar to create a reference list
-        ls_ref = LocationSignature.LocationSignature(360)
-        self.characterize_location(ls_ref)
-        
-        
-        # read all files and convert to depth histogram
-        least_squared_error = 999999999
-        best_match_index = -1
-        
-        
-        #hardcoded foir now - chang later
-        for index in range(5):
-            ls2 = self.signatureContainer.read(index)
-            
-            # read function may return empty list
-            if(ls2 != [] ):
-                error = ls_ref.squared_histogram_error(ls2)
-               
-                if(error < least_squared_error):
-                    least_squared_error = error
-                    best_match_index = index
-                    
-        print("leats error=",least_squared_error)           
-        print("best_match_index = ",best_match_index)
-        # after loop is finished , we will get the best index.
-        #now use the index to get best match sonar reading
-        best_match_sonar = self.signatureContainer.read(index)
-
-        
-        # A successful output will be the location of the waypoint.
-        waypointNumber = self.waypoint2Number[best_match_index]
-        print("The Recognized waypoint is =",waypointNumber ) 
-        
+       
         
         
        
@@ -681,27 +639,7 @@ robot = Robot()
 
 ##    robot.rotateRight(90)
 robot.signatureContainer.delete_loc_files()
-
-# store the waypoint in a dictionary
-robot.waypoint2Number[0] = (84,30)
-robot.waypoint2Number[1] = (180, 30)
-robot.waypoint2Number[2] = (180, 54)
-robot.waypoint2Number[3] = (138, 54)
-robot.waypoint2Number[4] = (138, 168)
-
-
-for i in range(5):
-        # Learn the 5 waypoints
-        print("PLACE ON NEXT LOCATION....")
-        time.sleep(13)
-        
-        robot.learnLocation()
-        
-
-#Try recognizing any one of them for now
-print("PLACE ON WAYPOINT YOU WANT TO RECOGNIZE....")
-time.sleep(13)
-robot.recognizeLocation()
+#robot.learnLocation()
 
 interface.terminate()
 #END

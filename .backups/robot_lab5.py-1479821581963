@@ -652,8 +652,7 @@ class Robot:
                     least_squared_error = error
                     best_match_index = index
                     
-        print("leats error=",least_squared_error)           
-        print("best_match_index = ",best_match_index)
+        
         # after loop is finished , we will get the best index.
         #now use the index to get best match sonar reading
         best_match_sonar = self.signatureContainer.read(index)
@@ -661,7 +660,7 @@ class Robot:
         
         # A successful output will be the location of the waypoint.
         waypointNumber = self.waypoint2Number[best_match_index]
-        print("The Recognized waypoint is =",waypointNumber ) 
+        print("The Recognized waypoint is =", ) 
         
         
         
@@ -690,17 +689,14 @@ robot.waypoint2Number[3] = (138, 54)
 robot.waypoint2Number[4] = (138, 168)
 
 
-for i in range(5):
-        # Learn the 5 waypoints
-        print("PLACE ON NEXT LOCATION....")
-        time.sleep(13)
-        
-        robot.learnLocation()
-        
+# Learn the 5 waypoints
+robot.learnLocation()
+#robot.learnLocation()
+#robot.learnLocation()
+#robot.learnLocation()
+#robot.learnLocation()
 
 #Try recognizing any one of them for now
-print("PLACE ON WAYPOINT YOU WANT TO RECOGNIZE....")
-time.sleep(13)
 robot.recognizeLocation()
 
 interface.terminate()

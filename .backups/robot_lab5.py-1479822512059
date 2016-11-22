@@ -699,8 +699,6 @@ for i in range(5):
         
 
 #Try recognizing any one of them for now
-print("PLACE ON WAYPOINT YOU WANT TO RECOGNIZE....")
-time.sleep(13)
 robot.recognizeLocation()
 
 interface.terminate()

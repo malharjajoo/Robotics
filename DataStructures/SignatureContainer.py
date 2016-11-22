@@ -4,8 +4,10 @@
 
 import random
 import os
+import LocationSignature
 
 # --------------------- File management class ---------------
+# This class stored both the angle-depth and depth-frequency graphs
 class SignatureContainer:
 
     def __init__(self, size = 5):
@@ -55,7 +57,7 @@ class SignatureContainer:
     # Read signature file identified by index. If the file doesn't exist
     # it returns an empty signature.
     def read(self, index):
-        ls = LocationSignature()
+        ls = LocationSignature.LocationSignature()
         filename = self.filenames[index]
         if os.path.isfile(filename):
             f = open(filename, 'r')
@@ -72,12 +74,13 @@ class SignatureContainer:
 
 
 	# FILL IN: compare two signatures
-	def compare_signatures(ls1, ls2):
-    		dist = 0
-    		dist = ls1.squared_error(ls2)
-    		return dist
+    def compare_signatures(ls_ref, ls2):
+	error = 99999999
+	error = ls_ref.squared_histogram_error(ls2)
+	return error
 
-
+	
+     
 #==============================================================================
 # This function tries to recognize the current location.
 # 1.   Characterize current location

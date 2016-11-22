@@ -34,7 +34,7 @@ class LocationSignature:
 			time.sleep(0.01)
 
 
-		
+	# Useless fo now... just leave it		
 	# Returns the squared error
         def squared_error(self,locationSignature):
                 sum = 0
@@ -43,9 +43,28 @@ class LocationSignature:
 
                 return sum
 
+
+
+	# input - one signature list
+	# output - squared error between self and input list histograms 
+	# imp funciton
+	def squared_histogram_error(self,ls2):
+                sum = 0
+		hist_ref = self.convertToDepthHistogram()
+		hist2 = ls2.convertToDepthHistogram()
+
+                for depth in hist_ref.keys():
+                        sum += ( (hist_ref[depth]-hist2[depth])*(hist_ref[depth]-hist2[depth]) )
+
+                return sum
+
 	# returns deoth histogram
 	def convertToDepthHistogram(self):
 		dict = {}
+		
+		# imp to do this(dont remove)
+		for i in range(360):
+			dict[i] = 0
 
 		for depth in self.sig:	
 			dict[depth] = dict.get(depth,0)+1
