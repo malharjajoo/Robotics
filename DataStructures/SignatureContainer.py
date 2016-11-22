@@ -71,11 +71,11 @@ class SignatureContainer:
 
 
 
-# FILL IN: compare two signatures
-def compare_signatures(ls1, ls2):
-    dist = 0
-    dist = ls1.squared_error(ls2)
-    return dist
+	# FILL IN: compare two signatures
+	def compare_signatures(ls1, ls2):
+    		dist = 0
+    		dist = ls1.squared_error(ls2)
+    		return dist
 
 
 #==============================================================================
@@ -105,10 +105,6 @@ def recognize_location():
 # recognize one of them, if locations have already been learned.
 """
 
-#signatures = SignatureContainer(5);
+
 #signatures.delete_loc_files()
-
-#learn_location();
-#recognize_location();
-
 

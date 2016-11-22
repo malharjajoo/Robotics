@@ -583,13 +583,12 @@ class Robot:
         else:
             self.signatureContainer.save(ls,free_index)
         print("COMPLETED")
-        ls.draw()
     
     
       
     sonar_motor_direction  = 1
     def characterize_location(self, ls):
-        time_calibration = 0.0057
+        
         
         self.setMotorSonarRotationSpeed(3 * self.sonar_motor_direction)
         
@@ -598,22 +597,14 @@ class Robot:
         # b = 1
             z = self.readUsSensor(self.usSensorBuffer)
             ls.sig[i] =  z 
-            time.sleep(time_calibration)
+            time.sleep(0.005)
         
+       
         
-        interface.setMotorPwm(self.sonar_motor_port[0], 0)
+        #interface.setMotorPwm(self.sonar_motor_port[0], 0)
         self.setMotorSonarRotationSpeed(0)
         self.sonar_motor_direction = self.sonar_motor_direction * -1
         
-        
-        self.setMotorSonarRotationSpeed(3 * self.sonar_motor_direction)
-        for i in range(len(ls.sig)):
-        # b = 1
-            time.sleep(time_calibration)
-        
-        interface.setMotorPwm(self.sonar_motor_port[0], 0)
-        self.setMotorSonarRotationSpeed(0)
-        self.sonar_motor_direction = self.sonar_motor_direction * -1
         
         """
         angle = self.rotAngleToMotorAngle(100)
@@ -638,7 +629,6 @@ robot = Robot()
 #for i in range(0,4):
 
 ##    robot.rotateRight(90)
-#robot.signatureContainer.delete_loc_files()
 robot.learnLocation()
 
 interface.terminate()

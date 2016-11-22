@@ -256,7 +256,7 @@ class Robot:
             else:
                 motorAngles = interface.getMotorAngles(self.motors)
 
-    """ Alternative
+    #""" Alternative
     def increaseMotorSonarAngle(self, angle, ls):
         motorParams = interface.MotorAngleControllerParameters()
         motorParams.maxRotationAcceleration = 2.0
@@ -271,28 +271,27 @@ class Robot:
         motorParams.pidParameters.k_d = 13
         interface.setMotorAngleControllerParameters(self.sonar_motor_port[0],motorParams)
 
-        x = interface.getMotorAngles(self.sonar_motor_port)[0][0]
+        x = interface.getMotorAngles(self.sonar_motor_port)
         print("X=",x)
         interface.increaseMotorAngleReferences(self.sonar_motor_port,[angle,0])
         
-        diff = angle - x
+        diff = angle - x[0][0]
         
         starting_index = 0 
         while not interface.motorAngleReferencesReached(self.sonar_motor_port) :
                 motorAngles = interface.getMotorAngles(self.sonar_motor_port)
-                diff2 = motorAngles[0][0] - x
+                diff2 = motorAngles[0][0] - x[0][0]
                 
-                no_of_elements = int(math.floor(float(diff2/diff) * len(ls.sig)))
+                no_of_elements = math.floor(float(diff2/diff) * len(ls.sig))
                  
                 
-                for i in range(starting_index,starting_index+no_of_elements):
+                for i in range(starting_index,no_of_elements):
                     z = self.readUsSensor(self.usSensorBuffer)
                     ls.sig[i] =  z 
                     
-                starting_index += no_of_elements
-                x+= diff2
+                starting_index = no_of_elements
                 
-    """
+   # """
 
     #Sensor Functions
     def checkSensors(self, touch_port):
@@ -583,14 +582,13 @@ class Robot:
         else:
             self.signatureContainer.save(ls,free_index)
         print("COMPLETED")
-        ls.draw()
     
     
       
     sonar_motor_direction  = 1
     def characterize_location(self, ls):
-        time_calibration = 0.0057
         
+        """
         self.setMotorSonarRotationSpeed(3 * self.sonar_motor_direction)
         
         #for i in range(360):
@@ -598,27 +596,20 @@ class Robot:
         # b = 1
             z = self.readUsSensor(self.usSensorBuffer)
             ls.sig[i] =  z 
-            time.sleep(time_calibration)
+            time.sleep(0.0023)
         
+       
         
-        interface.setMotorPwm(self.sonar_motor_port[0], 0)
-        self.setMotorSonarRotationSpeed(0)
-        self.sonar_motor_direction = self.sonar_motor_direction * -1
-        
-        
-        self.setMotorSonarRotationSpeed(3 * self.sonar_motor_direction)
-        for i in range(len(ls.sig)):
-        # b = 1
-            time.sleep(time_calibration)
-        
-        interface.setMotorPwm(self.sonar_motor_port[0], 0)
+        #interface.setMotorPwm(self.sonar_motor_port[0], 0)
         self.setMotorSonarRotationSpeed(0)
         self.sonar_motor_direction = self.sonar_motor_direction * -1
         
         """
+        
         angle = self.rotAngleToMotorAngle(100)
         self.increaseMotorSonarAngle(angle, ls)
-        """
+        
+        
         
        
         
@@ -638,7 +629,6 @@ robot = Robot()
 #for i in range(0,4):
 
 ##    robot.rotateRight(90)
-#robot.signatureContainer.delete_loc_files()
 robot.learnLocation()
 
 interface.terminate()

@@ -3,11 +3,12 @@ import random
 import time
 from DataStructures import CircularBuffer
 from DataStructures import Particle
-from DataStructures import SignatureContainer
-from DataStructures import LocationSignature
+#from DataStructures import LocationSignature
+#from DataStructures import SignatureContainer
 import math
 from DataStructures import Map
 import copy 
+
 
 
 interface = None
@@ -15,15 +16,13 @@ interface = None
 class Robot:
     # attributes - ideally different components (motors, ultrasonic sensor, etc)
     motors = [0,1]
-    sonar_motor_port = [3,0]
+    sonar_motor_port = [2,3]
 
     touch_ports = [0,1]
 
     sonar_port = 3
     
     usSensorBuffer = CircularBuffer.CircularBuffer()
-    signatureContainer = SignatureContainer.SignatureContainer()
-
     noOfParticles = 100
     particles_list = []
     theta = 0
@@ -37,11 +36,12 @@ class Robot:
         interface.motorEnable(self.motors[0])
         interface.motorEnable(self.motors[1])
         interface.motorEnable(self.sonar_motor_port[0])
-        #interface.motorEnable(self.sonar_motor_port[1]) # not used
+        print "motor enable"
 
         interface.sensorEnable(self.touch_ports[0], brickpi.SensorType.SENSOR_TOUCH)
         interface.sensorEnable(self.touch_ports[1], brickpi.SensorType.SENSOR_TOUCH)
         interface.sensorEnable(self.sonar_port, brickpi.SensorType.SENSOR_ULTRASONIC)
+        print "sonar enable"
         motorParams = interface.MotorAngleControllerParameters()
         motorParams.maxRotationAcceleration = 6.0
         motorParams.maxRotationSpeed = 12.0
@@ -54,17 +54,20 @@ class Robot:
         motorParams.pidParameters.k_p = 517
         motorParams.pidParameters.k_i = 1000
         motorParams.pidParameters.k_d = 13
-
+        print "motor params defined"
         interface.setMotorAngleControllerParameters(self.motors[0],motorParams)
         interface.setMotorAngleControllerParameters(self.motors[1],motorParams)
         interface.setMotorAngleControllerParameters(self.sonar_motor_port[0],motorParams)     
-        #interface.setMotorAngleControllerParameters(self.sonar_motor_port[1],motorParams)  #not used
-
+        print "motor params set"
+        print "creating particle list"
         self.createParticlesList()
-    
+        print "created particle list"
+        print "Creating signature container"
+        self.signatureContainer = SignatureContainer.SignatureContainer()
+        print "Created signature container"
         #temp draw debug, remove after
-        #self.printParticles()
-       # time.sleep(0.5)
+        self.printParticles()
+        time.sleep(0.5)
         #self.updatePosition(160,0)
         #self.updatePosition(0,90)
         #self.updatePosition(34,0)
@@ -256,11 +259,10 @@ class Robot:
             else:
                 motorAngles = interface.getMotorAngles(self.motors)
 
-    """ Alternative
-    def increaseMotorSonarAngle(self, angle, ls):
+    def increaseMotorSonarAngle(self, angle):
         motorParams = interface.MotorAngleControllerParameters()
-        motorParams.maxRotationAcceleration = 2.0
-        motorParams.maxRotationSpeed = 4.0
+        motorParams.maxRotationAcceleration = 6.0
+        motorParams.maxRotationSpeed = 12.0
         motorParams.feedForwardGain = 255/20.0
         motorParams.minPWM = 8.0
         motorParams.pidParameters.minOutput = -255
@@ -271,28 +273,11 @@ class Robot:
         motorParams.pidParameters.k_d = 13
         interface.setMotorAngleControllerParameters(self.sonar_motor_port[0],motorParams)
 
-        x = interface.getMotorAngles(self.sonar_motor_port)[0][0]
-        print("X=",x)
         interface.increaseMotorAngleReferences(self.sonar_motor_port,[angle,0])
-        
-        diff = angle - x
-        
-        starting_index = 0 
-        while not interface.motorAngleReferencesReached(self.sonar_motor_port) :
+
+        while not interface.motorAngleReferencesReached(self.motors) :
                 motorAngles = interface.getMotorAngles(self.sonar_motor_port)
-                diff2 = motorAngles[0][0] - x
-                
-                no_of_elements = int(math.floor(float(diff2/diff) * len(ls.sig)))
-                 
-                
-                for i in range(starting_index,starting_index+no_of_elements):
-                    z = self.readUsSensor(self.usSensorBuffer)
-                    ls.sig[i] =  z 
-                    
-                starting_index += no_of_elements
-                x+= diff2
-                
-    """
+
 
     #Sensor Functions
     def checkSensors(self, touch_port):
@@ -307,10 +292,10 @@ class Robot:
     def readUsSensor(self, circularBuffer):
         #first fill up the circular buffer if it isn't already
         usReading = interface.getSensorValue(self.sonar_port)
-        #if usReading:
-            #print(usReading)
-       # else:
-            #print "Failed to get Sonar reading."
+        if usReading:
+            print(usReading)
+        else:
+            print "Failed to get Sonar reading."
         circularBuffer.add(usReading[0])
         
         return circularBuffer.getMedian()
@@ -567,69 +552,64 @@ class Robot:
         self.particles_list = copy.deepcopy(resampled_particles_list)
 
 #=========================Place recognition functions================================================
+"""
+    def learn_location(self):
+        
+        ls = LocationSignature.LocationSignature()
+        print "Location signature created"
+        self.sonar_sweep(ls)
+        idx = self.signatureContainer.get_free_index();
+        if (idx == -1): # run out of signature files
+            print "\nWARNING:"
+            print "No signature file is available. NOTHING NEW will be learned and stored."
+            print "Please remove some loc_%%.dat files.\n"
+            return
+    
+        self.signatureContainer.save(ls,idx)
+        print "STATUS:  Location " + str(idx) + " learned and saved."
+        print("draewing oit now...")
+        
+       # ls.draw()
 
-    #Place Recognition Functions
-    #def characterize_location(ls):
-    def learnLocation(self):
-    
-        ls = LocationSignature.LocationSignature(360)
-        self.characterize_location(ls)
-        print(ls.sig)
-        
-        free_index = self.signatureContainer.get_free_index()
-        if(free_index == -1):
-            print("no more spaces left for storing signature")
 
-        else:
-            self.signatureContainer.save(ls,free_index)
-        print("COMPLETED")
-        ls.draw()
-    
-    
-      
-    sonar_motor_direction  = 1
-    def characterize_location(self, ls):
-        time_calibration = 0.0057
+    def sonar_sweep(self,ls):
         
-        self.setMotorSonarRotationSpeed(3 * self.sonar_motor_direction)
+        self.sonar_motor_direction = -1
         
-        #for i in range(360):
-        for i in range(len(ls.sig)):
-        # b = 1
+        self.setMotorSonarRotationSpeed(5 * self.sonar_motor_direction)
+        
+        for i in range(360):
+        #for i in range(len(ls.sig)):
+            b = 1
             z = self.readUsSensor(self.usSensorBuffer)
-            ls.sig[i] =  z 
-            time.sleep(time_calibration)
-        
-        
+            ls.sig[i] = z
+            print "Reading " + str(i)
+            time.sleep(0.0045)
+        print("complete")
+            
+            
         interface.setMotorPwm(self.sonar_motor_port[0], 0)
-        self.setMotorSonarRotationSpeed(0)
         self.sonar_motor_direction = self.sonar_motor_direction * -1
-        
-        
-        self.setMotorSonarRotationSpeed(3 * self.sonar_motor_direction)
-        for i in range(len(ls.sig)):
-        # b = 1
-            time.sleep(time_calibration)
-        
-        interface.setMotorPwm(self.sonar_motor_port[0], 0)
-        self.setMotorSonarRotationSpeed(0)
-        self.sonar_motor_direction = self.sonar_motor_direction * -1
-        
         """
-        angle = self.rotAngleToMotorAngle(100)
-        self.increaseMotorSonarAngle(angle, ls)
+        for i in range(360):
+            
+            z = self.readUsSensor(self.usSensorBuffer)
+            self.increaseMotorSonarAngle(1)
+            ls.sig[i] = z
         """
+
         
-       
-        
-        
-       
 
 
+
+"""
 # ===============================End of Robot Class =================
 
-# main
+# main 
+print "test output"
 robot = Robot()
+print "robot initialized"
+#robot.learn_location()
 
 #robot.moveForwards(10)
 
@@ -638,8 +618,10 @@ robot = Robot()
 #for i in range(0,4):
 
 ##    robot.rotateRight(90)
-#robot.signatureContainer.delete_loc_files()
-robot.learnLocation()
+
+
+    
+
 
 interface.terminate()
 #END

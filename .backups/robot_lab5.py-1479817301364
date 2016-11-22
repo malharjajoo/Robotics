@@ -605,10 +605,13 @@ class Robot:
         self.setMotorSonarRotationSpeed(0)
         self.sonar_motor_direction = self.sonar_motor_direction * -1
         
-        
         self.setMotorSonarRotationSpeed(3 * self.sonar_motor_direction)
+        
+        #for i in range(360):
         for i in range(len(ls.sig)):
         # b = 1
+            z = self.readUsSensor(self.usSensorBuffer)
+            ls.sig[i] =  z 
             time.sleep(time_calibration)
         
         interface.setMotorPwm(self.sonar_motor_port[0], 0)
