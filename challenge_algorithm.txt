@@ -1,0 +1,52 @@
+1. Area C- Move to (69,30) face upward and sonar left, move up to 10 cm of the wall, scanning the far wall.
+When an abnormality is found, move towards that y position
+
+2. Area B - Move to (84+ robot_width/2,84), change orientation to face upwards. Change sonar to rotate right, and scan upto
+(84+robot_width/2, 200).
+
+3. Area A - move to (95, 84), facing right, sonar facing downwards,
+
+4. Move to start.
+
+
+--Functions--
+
+Navigate to waypoint while detecting wall distance:
+similar implementatin to ucrrent,
+
+-function for rotating snoar to specific orientation (0-360) - keep track of current motorAngle, and hten just adjust
+
+- add check for touch sensors, incmrenting a count, keep track fo which obttles we've hit
+
+Reseting sonar position while 
+
+Need a way of abruptly stopping move forwards but also updating particle positions
+
++Very safe implementation
+-Code changes required
+-quite slow
+
+--------------------------------------------------------------------------------------
+
+1. Use place recognition and move to three waypoints
+
+2. If hit, then move to next waypoint,
+
+3. move sequentially to the waypoints (Area C to B: adjust y slightly)
+
+4. Scan at each waypoint, find abnormailty, calculate approx x,y of abnormality, move towards that position, if missed
+scan again and retry
+
+--Functions--
+
+-Adjust waypoint code for AreaC to Area B
+
+-Function for turning sonar distance in circle to an x,y corrodinate (ignoring 255 values)
+
+-Check whether x,y position of sonar corresponds to wall or abnormality
+
++ Reuses most code
+- wall between area b and c needs adjustment
+- sonar to x,y is difficult to implement
+- sonar orientation needs to be consistent
+
