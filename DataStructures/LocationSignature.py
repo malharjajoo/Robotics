@@ -13,7 +13,7 @@ class LocationSignature:
                         print self.sig[i]
 
 	# draws it oin the graphcal web interface
-	def draw(self,startpoint_x = 180,startpoint_y = 180):
+	def draw(self,startpoint_x = 180,startpoint_y = 180, startangle=0):
 		print("drawing now...")
 		drawScale = 3    # Used to scale the particle positions on the screen
 		
@@ -22,10 +22,10 @@ class LocationSignature:
 		
 		for angle in range(len(self.sig)):
 			depth = self.sig[angle]
-		
-
-			endpoint_x = startpoint_x + ( depth*math.cos(math.radians(angle)) )
-			endpoint_y = startpoint_y + ( depth*math.sin(math.radians(angle)) )
+			
+			
+			endpoint_x = startpoint_x + ( depth*math.cos(math.radians(angle+startangle)) )
+			endpoint_y = startpoint_y - ( depth*math.sin(math.radians(angle+startangle)) )
 
 			print "drawLine:" + str(((startpoint_x*drawScale),(startpoint_y*drawScale ),
                         (endpoint_x*drawScale),( endpoint_y*drawScale) ))
