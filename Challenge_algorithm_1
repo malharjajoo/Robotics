@@ -1,0 +1,40 @@
+Functions for approach 1:
+
+FindBottles():
+	SearchNavigateToWaypoint(10,30)
+	NavigateToWaypoint(84, 110)
+	SearchNavigateToWaypoint(158, 110)
+	NavigateToWaypoint(110, 84)
+	SearchNavigateToWaypoint(110, 10)
+	NavigateToWaypoint(<waypoint1>)
+	Celebrate!
+
+MoveForwardWithScan(self, distance, expected distance):
+	Move distance cm forward
+	While moving
+		take us readings
+		if it is >5cm different from expected distance
+			break and return the anomaly
+
+SearchNavigateToWaypoint(self, x, y):
+	Rotate to face waypoint (should leave the robot at 0, 90, 180, or 270 degrees)
+	Rotate sonar to face datum wall (easily done with an if-else covering every start and end direction, since 	we only have 4 possible states for each)
+	Calculate expected distance (from datum wall)
+	While !reached
+		MoveForwardWithScan(min(distanceToWaypoint, 20cm), distanceToWall)
+		if there is an anomaly
+			BumpNavigateToWaypoint(self.x, self.y + distance to anomaly)
+			return
+		decrement remaining distance by distance moved and repeat
+		if remaining distance == 0
+			break while loop
+
+BumpNavigateToWaypoint(self, x, y):
+	calculate angle
+	calculate distance
+	rotate to angle
+	MoveForwards(distance + 5cm)
+	if bumper is touching something
+		increment bottles found
+		return
+	return to search line
