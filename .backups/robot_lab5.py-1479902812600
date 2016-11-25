@@ -342,34 +342,35 @@ class Robot:
     def navigateToWaypoint(self, x, y):
             b = math.sqrt((self.x-x)*(self.x-x) + (self.y-y)*(self.y-y))
 
-            while b > 0:
-                new_x=x-self.x
-                new_y=y-self.y
-                rel_angle=math.degrees(math.atan2(float(new_y), float(new_x)))
-                theta=self.theta%360
-                newAngle=rel_angle-theta
+            #while b > 0:
+            new_x=x-self.x
+            new_y=y-self.y
+            rel_angle=math.degrees(math.atan2(float(new_y), float(new_x)))
+            theta=self.theta%360
+            newAngle=rel_angle-theta
 
-                if (newAngle>=-180) and (newAngle<0):
-                    self.rotateRight(abs(newAngle))
+            if (newAngle>=-180) and (newAngle<0):
+                self.rotateRight(abs(newAngle))
                 
 
-                elif (newAngle<180) and (newAngle>=0):
-                    self.rotateLeft(newAngle)
+            elif (newAngle<180) and (newAngle>=0):
+                self.rotateLeft(newAngle)
 
                 
-                elif (newAngle>=180) and (newAngle<360):
-                    self.rotateRight(360-newAngle)
+            elif (newAngle>=180) and (newAngle<360):
+                self.rotateRight(360-newAngle)
 
     
-                elif (newAngle<-180) and (newAngle>-360):
-                    self.rotateLeft(360+newAngle)
+            elif (newAngle<-180) and (newAngle>-360):
+                self.rotateLeft(360+newAngle)
 
-                if b > 20:
-                    b = b-20
-                    self.moveForwards(20)
-                else :
-                    self.moveForwards(b)
-                    b = 0
+                #if b > 20:
+                   # b = b-20
+                    #self.moveForwards(20)
+                #else :
+                   # self.moveForwards(b)
+                    #b = 0
+            self.moveForwards(b)
 
 
     # Particle Functions
@@ -597,10 +598,10 @@ class Robot:
       
     sonar_motor_direction  = -1
     def characterize_location(self, ls):
-        time_calibration = 0.0061
+        time_calibration = 0.0135
         
         
-        self.setMotorSonarRotationSpeed(3 * self.sonar_motor_direction)
+        self.setMotorSonarRotationSpeed(1.5 * self.sonar_motor_direction)
         
         #for i in range(360):
         for i in range(len(ls.sig)):
@@ -615,10 +616,11 @@ class Robot:
         self.sonar_motor_direction = self.sonar_motor_direction * -1
         
         time.sleep(0.5)
+        time_calibration2 = 0.0073
         self.setMotorSonarRotationSpeed(3 * self.sonar_motor_direction)
         for i in range(len(ls.sig)):
         # b = 1
-            time.sleep(time_calibration)
+            time.sleep(time_calibration2)
         
         interface.setMotorPwm(self.sonar_motor_port[0], 0)
         self.setMotorSonarRotationSpeed(0)
@@ -689,12 +691,14 @@ robot.waypoint2Number[3] = (138, 54)
 robot.waypoint2Number[4] = (138, 168)
 
 
-for i in range(5):
+#for i in range(5):
         # Learn the 5 waypoints
-        print("PLACE ON NEXT LOCATION....")
-        time.sleep(3)
+       # print("PLACE ON NEXT LOCATION....")
+
+#robot.navigateToWaypoint(42,140)
+#time.sleep(3)
         
-        robot.learnLocation()
+robot.learnLocation()
         
 
 #Try recognizing any one of them for now

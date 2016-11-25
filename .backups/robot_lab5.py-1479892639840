@@ -27,8 +27,6 @@ class Robot:
 
     noOfParticles = 100
     particles_list = []
-    x = 84
-    y = 30
     theta = 0
     speed = 6.0
 
@@ -587,15 +585,14 @@ class Robot:
         if(free_index == -1):
             print("no more spaces left for storing signature")
 
-        #else:
-            #self.signatureContainer.save(ls,free_index)
+        else:
+            self.signatureContainer.save(ls,free_index)
         print("COMPLETED")
-        ls.draw(self.x+10, 250-self.y, self.theta)
-        self.printParticles()
+        ls.draw()
     
     
       
-    sonar_motor_direction  = -1
+    sonar_motor_direction  = 1
     def characterize_location(self, ls):
         time_calibration = 0.0061
         
@@ -614,7 +611,7 @@ class Robot:
         self.setMotorSonarRotationSpeed(0)
         self.sonar_motor_direction = self.sonar_motor_direction * -1
         
-        time.sleep(0.5)
+        
         self.setMotorSonarRotationSpeed(3 * self.sonar_motor_direction)
         for i in range(len(ls.sig)):
         # b = 1
@@ -650,6 +647,7 @@ class Robot:
             # read function may return empty list
             if(ls2 != [] ):
                 error = ls_ref.squared_histogram_error(ls2)
+               
                 if(error < least_squared_error):
                     least_squared_error = error
                     best_match_index = index
@@ -664,7 +662,10 @@ class Robot:
         # A successful output will be the location of the waypoint.
         waypointNumber = self.waypoint2Number[best_match_index]
         print("The Recognized waypoint is =",waypointNumber ) 
-
+        
+        
+        
+       
 
 
 # ===============================End of Robot Class =================
@@ -679,7 +680,7 @@ robot = Robot()
 #for i in range(0,4):
 
 ##    robot.rotateRight(90)
-#robot.signatureContainer.delete_loc_files()
+robot.signatureContainer.delete_loc_files()
 
 # store the waypoint in a dictionary
 robot.waypoint2Number[0] = (84,30)
@@ -692,7 +693,7 @@ robot.waypoint2Number[4] = (138, 168)
 for i in range(5):
         # Learn the 5 waypoints
         print("PLACE ON NEXT LOCATION....")
-        time.sleep(3)
+        time.sleep(13)
         
         robot.learnLocation()
         
@@ -700,7 +701,7 @@ for i in range(5):
 #Try recognizing any one of them for now
 print("PLACE ON WAYPOINT YOU WANT TO RECOGNIZE....")
 time.sleep(13)
-#robot.recognizeLocation()
+robot.recognizeLocation()
 
 interface.terminate()
 #END

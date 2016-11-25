@@ -590,12 +590,12 @@ class Robot:
         #else:
             #self.signatureContainer.save(ls,free_index)
         print("COMPLETED")
-        ls.draw(self.x+10, 250-self.y, self.theta)
+        ls.draw(self.x+10, 250-self.y)
         self.printParticles()
     
     
       
-    sonar_motor_direction  = -1
+    sonar_motor_direction  = 1
     def characterize_location(self, ls):
         time_calibration = 0.0061
         

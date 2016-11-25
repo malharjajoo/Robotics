@@ -29,7 +29,7 @@ class Robot:
     particles_list = []
     x = 84
     y = 30
-    theta = 0
+    theta = 45
     speed = 6.0
 
     #constructor

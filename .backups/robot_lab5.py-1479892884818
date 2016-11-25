@@ -27,8 +27,6 @@ class Robot:
 
     noOfParticles = 100
     particles_list = []
-    x = 84
-    y = 30
     theta = 0
     speed = 6.0
 
@@ -590,12 +588,11 @@ class Robot:
         #else:
             #self.signatureContainer.save(ls,free_index)
         print("COMPLETED")
-        ls.draw(self.x+10, 250-self.y, self.theta)
-        self.printParticles()
+        ls.draw()
     
     
       
-    sonar_motor_direction  = -1
+    sonar_motor_direction  = 1
     def characterize_location(self, ls):
         time_calibration = 0.0061
         
@@ -614,7 +611,7 @@ class Robot:
         self.setMotorSonarRotationSpeed(0)
         self.sonar_motor_direction = self.sonar_motor_direction * -1
         
-        time.sleep(0.5)
+        
         self.setMotorSonarRotationSpeed(3 * self.sonar_motor_direction)
         for i in range(len(ls.sig)):
         # b = 1

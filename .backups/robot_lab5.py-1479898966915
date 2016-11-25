@@ -29,7 +29,7 @@ class Robot:
     particles_list = []
     x = 84
     y = 30
-    theta = 0
+    theta = 45
     speed = 6.0
 
     #constructor
@@ -595,7 +595,7 @@ class Robot:
     
     
       
-    sonar_motor_direction  = -1
+    sonar_motor_direction  = 1
     def characterize_location(self, ls):
         time_calibration = 0.0061
         
