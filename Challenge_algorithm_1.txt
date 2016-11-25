@@ -1,11 +1,11 @@
 Functions for approach 1:
 
 FindBottles():
-	SearchNavigateToWaypoint(10,30)
+	SearchNavigateToWaypoint(10,30) //Or SearchArea(C)
 	NavigateToWaypoint(84, 110)
-	SearchNavigateToWaypoint(158, 110)
+	SearchNavigateToWaypoint(158, 110) //Or SearchArea(B)
 	NavigateToWaypoint(110, 84)
-	SearchNavigateToWaypoint(110, 10)
+	SearchNavigateToWaypoint(110, 10) //Or SearchArea(A)
 	NavigateToWaypoint(<waypoint1>)
 	Celebrate!
 
@@ -38,3 +38,43 @@ BumpNavigateToWaypoint(self, x, y):
 		increment bottles found
 		return
 	return to search line
+	
+	
+----------------------------------------------------------------------------------------
+PYTHON IMPLEMENTATION:
+
+Member fields:
+sonarStartingAngle = 0 //Used to reset sonar position to face forward
+
+In Constructor:
+sonarStartingAngle = interface.getMotorAngles(self.sonar_motor_port)[0][0]
+
+def MoveForwardsWithScanning(self, distance, expectedDistance):
+#returns true if hit bottle,
+#returns result of BumpNavigateToWaypoint
+#returns false if reached end
+	angle = self.distToAngle(distance)
+	#set motor params
+	interface.setMotorAngleControllerParameters(self.motors[0],motorParams)
+        interface.setMotorAngleControllerParameters(self.motors[1],motorParams)
+	interface.increaseMotorAngleReferences(self.motors,[angle1,angle2])
+	startAngle = interface.getMotorAngles(self.motors)[0][0]
+	#Before setting off, take five values of the sonar to the wall to get a good median
+	for i in range(5):
+		usReading = readUsSensor(self.usSensorBuffer):
+	while not interface.motorAngleReferencesReached(self.motors) :
+    	        if self.checkSensors(self.touch_ports[0]) or self.checkSensors(self.touch_ports[1]):
+			motorAngles = interface.getMotorAngles(self.motors)[0][0]
+			angleDiff = float(motorAngle-startAngle)
+			distanceTravelled = (angleDiff/float(angle)) * distance
+			hitCount += 1
+			self.updatePosition(distanceTravelled, 0)
+			//
+			self.setSonarAngle
+			return true	//hit bottle
+		else:
+			usReading = readUsSensor(self.usSensorBuffer)
+			if abs(usReading - expectedDistance) > 8:
+				
+			
+def setSonarAngle(self, angle):	#angle is 0-360, 0 degrees facing forwards
