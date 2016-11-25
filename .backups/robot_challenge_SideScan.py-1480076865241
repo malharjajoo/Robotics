@@ -268,7 +268,8 @@ class Robot:
             else:
                 motorAngles = interface.getMotorAngles(self.motors)
 
-    def increaseMotorSonarAngle(self, angle):
+    """ Alternative
+    def increaseMotorSonarAngle(self, angle, ls):
         motorParams = interface.MotorAngleControllerParameters()
         motorParams.maxRotationAcceleration = 2.0
         motorParams.maxRotationSpeed = 4.0
@@ -282,9 +283,28 @@ class Robot:
         motorParams.pidParameters.k_d = 13
         interface.setMotorAngleControllerParameters(self.sonar_motor_port[0],motorParams)
 
+        x = interface.getMotorAngles(self.sonar_motor_port)[0][0]
+        print("X=",x)
+        interface.increaseMotorAngleReferences(self.sonar_motor_port,[angle,0])
+        
+        diff = angle - x
+        
+        starting_index = 0 
         while not interface.motorAngleReferencesReached(self.sonar_motor_port) :
                 motorAngles = interface.getMotorAngles(self.sonar_motor_port)
-
+                diff2 = motorAngles[0][0] - x
+                
+                no_of_elements = int(math.floor(float(diff2/diff) * len(ls.sig)))
+                 
+                
+                for i in range(starting_index,starting_index+no_of_elements):
+                    z = self.readUsSensor(self.usSensorBuffer)
+                    ls.sig[i] =  z 
+                    
+                starting_index += no_of_elements
+                x+= diff2
+                
+    """
 
     #Sensor Functions
     def checkSensors(self, touch_port):
@@ -685,7 +705,6 @@ class Robot:
             else:
                 usReading = readUsSensor(self.usSensorBuffer)
                 if abs(usReading - expectedDistance) > 8:
-                    
 
 
     def setSonarAngle(self, angle): #angle is 0-360, 0 degrees facing forwards

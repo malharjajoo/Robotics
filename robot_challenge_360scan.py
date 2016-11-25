@@ -21,6 +21,11 @@ class Robot:
 
     sonar_port = 3
     
+    obstaclesFound = 0 
+    checkpointCoordinate = (105,40) 
+# poissibilty of introducing another checkpoint 
+   # checkpointCoordinate2 = (126 ,126 ) 
+	
     usSensorBuffer = CircularBuffer.CircularBuffer()
     signatureContainer = SignatureContainer.SignatureContainer()
     waypoint2Number = {}
@@ -367,6 +372,7 @@ class Robot:
             elif (newAngle<-180) and (newAngle>-360):
                 self.rotateLeft(360+newAngle)
 
+		# moving in steps
                 #if b > 20:
                    # b = b-20
                     #self.moveForwards(20)
@@ -576,39 +582,107 @@ class Robot:
 
 #=========================Place recognition functions================================================
 
-    #Place Recognition Functions
-    #def characterize_location(ls):
+# Returns coordinate of obstacleS (more than one if possible ) 
+    def findObstacles(ls):
+	
+	# Might find more than one obstacle ?
+	obstacle_coord_list = []
+
+	# diameter of object + minimum distance from wall
+	threshold = 20 
+	
+	
+	angleBuffer = CircularBuffer.CircularBuffer(4)
+	depthBuffer =  CircularBuffer.CircularBuffer(4)
+
+	
+	# Logic for finding obvejct - find a region of decrease and increase and record position.
+	#this should happen as the object is always 10cm from the wall
+	
+
+	# simply for speedup
+	sig = ls.sig
+
+	for i in range(sig):
+		
+		angleBuffer.add(i)
+		depthBuffer.add(sig[i])
+	
+		if(depthBuffer.getMedian() > threshold ):
+		
+			obstacle_coord = findObstacleCoordinate(angleBuffer.getMedian(),depthBuffer.getMedian())
+			print("Found object at - ",obstacle_coord )
+			obstacle_coord_list.append(obstacle_coord)
+
+		 
+	return obstacle_coord_list 
+			
+		
+			
+				
+    def findObstacleCoordinate(angle,distance):
+	
+	obstacle_x = 0
+	obstacle_y = 0 
+	
+	obstacle_x = self.x + ( distance*math.cos(math.radians(angle)))		
+	obstacle_y = self.y + ( distance*math.sin(math.radians(angle)))
+
+	return obstacle__x,obstacle_y		
+	
+
+
     def learnLocation(self):
-    
-       
-         
         
+	# 360 is the size of signature array.
         ls = LocationSignature.LocationSignature(360)
+	
+	# fill the array with depth measurements at every angle.
         self.characterize_location(ls)
        
-        
-        free_index = self.signatureContainer.get_free_index()
-        if(free_index == -1):
-            print("no more spaces left for storing signature")
-
-        #else:
-            #self.signatureContainer.save(ls,free_index)
+	
         print("COMPLETED")
+
+	# Draw the sonar depth measurements.
         ls.draw(self.x+10, 250-self.y, self.theta)
-        self.printParticles()
+        #self.printParticles()
     
-    
+ 	# Tries to find coordinate of obstacleS based on sonar depth measurements.
+	obstacle_coord_list = findObstacle(ls)
+	
+	if(len( obstacle_coord_list )== 0 ):
+		# No object found 
+		# need to move to another waypoint
+		# or maybe follow wall following strategy ?
+		print("Need to fill this")
+
+	elif(len(obstacle_coord_list) > 3):
+		print("ERROR:More than 3 objects detected")
+
+  	else:
+		for obstacle_coord in obstacle_coord_list:
+	
+			# move to obstacle
+			self.navigateToWayPoint(obstacle_coord[0],obstacle_coord[1])
+			self.obstaclesFound += 1
+
+			# move to checkpoiint ( to avoid detecting collision with walls ) 
+			self.navigateToWaypoint(self.checkpointCoordinate[0], self.checkpointCoordinate[1])
+		 
+		
+
+#This function simply fills the location Signature array with sonar readings.
       
     sonar_motor_direction  = -1
     def characterize_location(self, ls):
         time_calibration = 0.02
-        
+        time_calibration2 = 0.007
         
         self.setMotorSonarRotationSpeed(1 * self.sonar_motor_direction)
         
-        #for i in range(360):
+        # fill the location signaure object
         for i in range(len(ls.sig)):
-        # b = 1
+        
             z = self.readUsSensor(self.usSensorBuffer)
             ls.sig[i] =  z 
             time.sleep(time_calibration)
@@ -619,21 +693,30 @@ class Robot:
         self.sonar_motor_direction = self.sonar_motor_direction * -1
         
         time.sleep(0.5)
-        time_calibration2 = 0.007
+        
+	# Rotate the sonar in reverse direction to prevent wire from getting entangled.
+	# NOTE - time calibration value is different from previouys rotation.
         self.setMotorSonarRotationSpeed(3 * self.sonar_motor_direction)
         for i in range(len(ls.sig)):
-        # b = 1
+        
             time.sleep(time_calibration2)
         
         interface.setMotorPwm(self.sonar_motor_port[0], 0)
         self.setMotorSonarRotationSpeed(0)
         self.sonar_motor_direction = self.sonar_motor_direction * -1
         
-        """
-        angle = self.rotAngleToMotorAngle(100)
-        self.increaseMotorSonarAngle(angle, ls)
-        """
-        
+       
+
+	
+
+
+
+
+
+
+
+"""
+	# Htis function is not needed for the challenge.        
     # At any random waypoint
     # output - the way point location
     def recognizeLocation(self):
@@ -671,15 +754,15 @@ class Robot:
         print("The Recognized waypoint is =",waypointNumber ) 
 
 
+"""
+
+
 
 # ===============================End of Robot Class =================
 
 # main
 robot = Robot()
 
-#robot.moveForwards(10)
-
-#robot.readWayPoints("waypoints.txt")
 
 #for i in range(0,4):
 
@@ -688,26 +771,20 @@ robot = Robot()
 
 # store the waypoint in a dictionary
 robot.waypoint2Number[0] = (84,30)
-robot.waypoint2Number[1] = (180, 30)
-robot.waypoint2Number[2] = (180, 54)
-robot.waypoint2Number[3] = (138, 54)
-robot.waypoint2Number[4] = (138, 168)
 
 
 #for i in range(5):
         # Learn the 5 waypoints
        # print("PLACE ON NEXT LOCATION....")
 
-robot.navigateToWaypoint(,140)
+# For Area C.
+robot.navigateToWaypoint(84,84)
 time.sleep(3)
         
 robot.learnLocation()
         
 
-#Try recognizing any one of them for now
-print("PLACE ON WAYPOINT YOU WANT TO RECOGNIZE....")
-time.sleep(13)
-#robot.recognizeLocation()
+
 
 interface.terminate()
 #END

@@ -65,10 +65,6 @@ class Robot:
         interface.setMotorAngleControllerParameters(self.sonar_motor_port[0],motorParams)     
         #interface.setMotorAngleControllerParameters(self.sonar_motor_port[1],motorParams)  #not used
 
-        
-        #calculate sonar starting angle
-        sonarStartingAngle = interface.getMotorAngles(self.sonar_motor_port)[0][0]
-        
         self.createParticlesList()
         
     
@@ -268,7 +264,8 @@ class Robot:
             else:
                 motorAngles = interface.getMotorAngles(self.motors)
 
-    def increaseMotorSonarAngle(self, angle):
+    """ Alternative
+    def increaseMotorSonarAngle(self, angle, ls):
         motorParams = interface.MotorAngleControllerParameters()
         motorParams.maxRotationAcceleration = 2.0
         motorParams.maxRotationSpeed = 4.0
@@ -282,9 +279,28 @@ class Robot:
         motorParams.pidParameters.k_d = 13
         interface.setMotorAngleControllerParameters(self.sonar_motor_port[0],motorParams)
 
+        x = interface.getMotorAngles(self.sonar_motor_port)[0][0]
+        print("X=",x)
+        interface.increaseMotorAngleReferences(self.sonar_motor_port,[angle,0])
+        
+        diff = angle - x
+        
+        starting_index = 0 
         while not interface.motorAngleReferencesReached(self.sonar_motor_port) :
                 motorAngles = interface.getMotorAngles(self.sonar_motor_port)
-
+                diff2 = motorAngles[0][0] - x
+                
+                no_of_elements = int(math.floor(float(diff2/diff) * len(ls.sig)))
+                 
+                
+                for i in range(starting_index,starting_index+no_of_elements):
+                    z = self.readUsSensor(self.usSensorBuffer)
+                    ls.sig[i] =  z 
+                    
+                starting_index += no_of_elements
+                x+= diff2
+                
+    """
 
     #Sensor Functions
     def checkSensors(self, touch_port):
@@ -660,35 +676,7 @@ class Robot:
 # ===============================SideWall Algorithm==========================
 
 
-    def MoveForwardsWithScanning(self, distance, expectedDistance):
-    #returns true if hit bottle,
-    #returns result of BumpNavigateToWaypoint
-    #returns false if reached end
-        angle = self.distToAngle(distance)
-        #set motor params
-        interface.setMotorAngleControllerParameters(self.motors[0],motorParams)
-            interface.setMotorAngleControllerParameters(self.motors[1],motorParams)
-        interface.increaseMotorAngleReferences(self.motors,[angle1,angle2])
-        startAngle = interface.getMotorAngles(self.motors)[0][0]
-        #Before setting off, take five values of the sonar to the wall to get a good median
-        for i in range(5):
-            usReading = readUsSensor(self.usSensorBuffer):
-        while not interface.motorAngleReferencesReached(self.motors) :
-                    if self.checkSensors(self.touch_ports[0]) or self.checkSensors(self.touch_ports[1]):
-                motorAngles = interface.getMotorAngles(self.motors)[0][0]
-                angleDiff = float(motorAngle-startAngle)
-                distanceTravelled = (angleDiff/float(angle)) * distance
-                hitCount += 1
-                self.updatePosition(distanceTravelled, 0)
-                self.setSonarAngle
-                return true	//hit bottle
-            else:
-                usReading = readUsSensor(self.usSensorBuffer)
-                if abs(usReading - expectedDistance) > 8:
-                    
 
-
-    def setSonarAngle(self, angle): #angle is 0-360, 0 degrees facing forwards
 
 # ===============================End of Robot Class =================
 
