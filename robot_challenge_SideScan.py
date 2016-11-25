@@ -90,28 +90,39 @@ class Robot:
 
     # movement functions
     def moveForwards(self, distance=-1):
+
+	bumped = False
+
         if distance<0:
             self.setMotorRotationSpeed(self.speed, self.speed)
             while True:
 
                 if self.checkSensors(self.touch_ports[0]) and not  self.checkSensors(self.touch_ports[1]):    
-                    self.reverseForkRight(90)
-                    self.setMotorRotationSpeed(self.speed, self.speed)
+                   self.reverseForkRight(90)
+                   # self.setMotorRotationSpeed(self.speed, self.speed)
+		   bumped = True 
+		   return bumped 		
                 
 
                 elif not self.checkSensors(self.touch_ports[0]) and self.checkSensors(self.touch_ports[1]):
                     self.reverseForkLeft(90)                
-                    self.setMotorRotationSpeed(self.speed, self.speed)
+                    #self.setMotorRotationSpeed(self.speed, self.speed)
+                    bumped = True 
+                    return bumped
 
 
                 elif self.checkSensors(self.touch_ports[0]) and  self.checkSensors(self.touch_ports[1]):
                     self.reverseForkLeft(90)
-                    self.setMotorRotationSpeed(self.speed, self.speed)
+                    #self.setMotorRotationSpeed(self.speed, self.speed)
+                    bumped = True 
+                    return bumped
                 
+
         else:
             angle = self.distToAngle(distance)
             self.increaseMotorAngle(angle, angle)
             self.updatePosition(distance, 0)
+	    return False
 
     def moveBackwards(self, distance=-1):
         if distance<0:
@@ -128,7 +139,7 @@ class Robot:
         print("NOW ROTATING RIGHT")
         angle = self.rotAngleToMotorAngle(rotAngle)
         self.increaseMotorAngle(angle, -angle)
-        #self.updatePosition(0,-rotAngle)
+        self.updatePosition(0,-rotAngle)
 
     def rotateLeft(self, rotAngle):
         print ("NOW ROTATING LEFT")
@@ -267,7 +278,7 @@ class Robot:
                 break
             else:
                 motorAngles = interface.getMotorAngles(self.motors)
-
+#position control for sonar
     def increaseMotorSonarAngle(self, angle):
         motorParams = interface.MotorAngleControllerParameters()
         motorParams.maxRotationAcceleration = 2.0
@@ -704,28 +715,10 @@ robot = Robot()
 ##    robot.rotateRight(90)
 #robot.signatureContainer.delete_loc_files()
 
-# store the waypoint in a dictionary
-robot.waypoint2Number[0] = (84,30)
-robot.waypoint2Number[1] = (180, 30)
-robot.waypoint2Number[2] = (180, 54)
-robot.waypoint2Number[3] = (138, 54)
-robot.waypoint2Number[4] = (138, 168)
 
-
-#for i in range(5):
-        # Learn the 5 waypoints
-       # print("PLACE ON NEXT LOCATION....")
-
-robot.navigateToWaypoint(,140)
-time.sleep(3)
         
-robot.learnLocation()
+robot.findObstacles()
         
-
-#Try recognizing any one of them for now
-print("PLACE ON WAYPOINT YOU WANT TO RECOGNIZE....")
-time.sleep(13)
-#robot.recognizeLocation()
 
 interface.terminate()
-#END
+	#END
