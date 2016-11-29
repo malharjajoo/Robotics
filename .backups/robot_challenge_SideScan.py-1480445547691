@@ -389,12 +389,11 @@ class Robot:
                     #b = 0
             #LOOP NEW
             
-                 
                 if b > 20:
                     b = b-20
-                    self.moveForwards(20,True)
+                    self.moveForwards(20)
                 else:
-                    self.moveForwards(b,True)
+                    self.moveForwards(b)
                     b = 0
 
 
@@ -655,10 +654,6 @@ class Robot:
         """
         angle = self.rotAngleToMotorAngle(100)
         self.increaseMotorSonarAngle(angle, ls)
- 
- 
- """
-        
         """
         
     # At any random waypoint
@@ -697,7 +692,6 @@ class Robot:
         waypointNumber = self.waypoint2Number[best_match_index]
         print("The Recognized waypoint is =",waypointNumber ) 
 
-        """
         
 # ===============================SideWall Algorithm==========================
 
@@ -714,15 +708,15 @@ class Robot:
     #============== Area C =========================
 
         # preparation for area C
-        self.navigateToWaypoint(62,30)
+        self.navigateToWaypoint(60,30)
         
 
-        #vrticla distance to wall y = 168 ,we move 15 less than that 
+        #vrticla distance to wall = 168 ,we move 10 less than that 
         distance = (168-15) - self.y
         #self.rotateRight(90)
-        #self.navigateToWaypoint(self.x,self.y+1)
+        self.navigateToWaypoint(self.x,self.y+1)
             
-        #rotate sonar to face left
+        #rotate sonar to face right
         self.rotateSonar(-90)
         objectFound = self.moveForwardsWithScanning(distance)
 
@@ -731,7 +725,6 @@ class Robot:
             print("incrementing hitCount....")
 
             hitCount += 1
-            print("hit count = ",hitCount)
 
         # Imp - need to decide what to do in this case. Not so obvious
         # Best strategy is to have a specific case for each Area A,B and C
@@ -759,7 +752,7 @@ class Robot:
         #while abs(self.theta - 90) > 2:
             #self.rotateLeft(90-self.theta)
             
-        self.navigateToWaypoint(self.x,self.y+5)
+        self.navigateToWaypoint(self.x,self.y+1)
         print "rotation adjustment complete"
         
         #vertical distance to wall d on mcl map
@@ -775,7 +768,6 @@ class Robot:
             print("incrementing hitCount....")
 
             hitCount += 1
-            print("hit count = ",hitCount)
 
             # Imp - need to decide what to do in this case. Not so obvious
             # Best strategy is to have a specific case for each Area A,B and C
@@ -788,21 +780,14 @@ class Robot:
     #============== Area A =========================
 
             # preparation for area A
-        self.navigateToWaypoint(100,65)
-        self.navigateToWaypoint(100,55)
-        print("ROBOT Y IS AT ( shoudl be 55 )= ",self.y)
-        #self.navigateToWaypoint(100,15)
+        self.navigateToWaypoint(90,15)
         #shortcut to turn it straight , facing towards wall d
         # (instead of finding orientation of robot to turn it straight)
-        
-        #self.navigateToWaypoint(self.x,65)
-        self.navigateToWaypoint(self.x+3,self.y)
-        
+        self.navigateToWaypoint(self.x,self.y+1)
 
-        #vrticla distance to wall g = 84 ,we move 10 less than that 
-        distance = (210-15) - self.x
+        #vrticla distance to wall f = 84 ,we move 10 less than that 
+        distance = (84-15) - self.y
 
-        #rotate sonar right
         self.rotateSonar(90)
         objectFound = self.moveForwardsWithScanning(distance)
 
@@ -810,7 +795,6 @@ class Robot:
         if(objectFound == True):
             print("incrementing hitCount....")
             hitCount += 1
-            print("hit count = ",hitCount)
 
         # Imp - need to decide what to do in this case. Not so obvious
         # Best strategy is to have a specific case for each Area A,B and C
@@ -820,23 +804,19 @@ class Robot:
     #===================================================
 
         if(hitCount == 3):
-            self.navigateToWaypoint(84,30)
+            self.navigateToWayPoint(84,30)
             print("Challeneg Completed")
-        #else:
-            
-            #self.findObstacles()
+        else:
+            self.findObstacles()
 
 
 
 
-        
+        # this function is called until all 3 objects have not been hit once.
     def moveForwardsWithScanning(self, distance):
             #returns true if hit bottle,
             #returns result of Bump
             #returns false if reached end
-            
-            
-            #Need this to calculate the fraction of distance
             angle = self.distToAngle(distance)
             
             
@@ -863,7 +843,7 @@ class Robot:
             
             
             startAngle = interface.getMotorAngles(self.motors)[0][0]
-            medianBuffer = CircularBuffer.CircularBuffer(20)
+            medianBuffer = CircularBuffer.CircularBuffer(50)
             
             #set flags for the beginning and end of the bottle
             angle_beginning = -1;   #start of bottle
@@ -875,7 +855,7 @@ class Robot:
             y_mid = 0
 
             #Before setting off, take five values of the sonar to the wall to get a good median
-            for i in range(20):
+            for i in range(50):
                 medianBuffer.add([self.readUsSensor(self.usSensorBuffer), self.y])
 
             wallDistance  = self.readUsSensor(self.usSensorBuffer)
@@ -889,11 +869,8 @@ class Robot:
                     if self.checkSensors(self.touch_ports[0]) or self.checkSensors(self.touch_ports[1]):
                         motorAngles = interface.getMotorAngles(self.motors)[0][0]
                         angleDiff = float(motorAngles-startAngle)
-                        
-                        # calculate the fraction of the total distance that we travelled.
-                        # Used for updating MCL after rotating sonarS
                         distanceTravelled = (float(angleDiff)/float(angle)) * distance
-                        
+
 
                         #stop motors
                         interface.setMotorPwm(self.motors[0],0)
@@ -922,8 +899,6 @@ class Robot:
                         medianBuffer.add([usReading, currentAngle])
                         #calculate gradient
                         #print(medianBuffer.circularBuffer)
-                        
-                        #wall x- bottle x distance
                         gradient = medianBuffer.circularBuffer[-1][0] - medianBuffer.circularBuffer[-2][0]
                         
                         
@@ -944,15 +919,10 @@ class Robot:
                         #if abs(usReading - wallDistance) > 8:   
                         if(abs(gradient) <= 4 and bottle_start == True and bottle_end == True):
                             y_mid = float(y_begin + y_end)/2
-                            
-                            
-                            
                             self.moveBackwards(y_end - y_mid, False)
                             print ("y begin = "+ str(y_begin))
                             print ("y end = "+ str(y_end))
                             print ("y mid = "+ str(y_mid))
-                            
-                            # find minimum of sonar readings to find obstacle centre
                             min_x = medianBuffer.circularBuffer[0][0]
                             for i in range(len(medianBuffer.circularBuffer)):
                                 if min_x > medianBuffer.circularBuffer[i][0]:
@@ -966,7 +936,7 @@ class Robot:
                             obstacle_x = 0 
                             obstacle_y = 0
                             
-                            print("sonar Found Obstacle!")
+                            print("Found Obstacle!")
                             motorAngles = interface.getMotorAngles(self.motors)[0][0]
                             angleDiff = float(motorAngles-startAngle)
                             distanceTravelled = (float(angleDiff)/float(angle)) * distance
@@ -988,7 +958,7 @@ class Robot:
                                 #Again , like above , we have moved only vertically
                                 self.updatePosition(distanceTravelled, 0)
                                 
-                                
+                                #print("US READING ",usReading)
                                 obstacle_x = self.x - min_x
                                 
                                 #print("OBSTACL_X = ",obstacle_x)
@@ -1072,13 +1042,10 @@ class Robot:
                     #print("PBSTACL_X = ",obstacle_x)
                     obstacle_y = self.y
 
-                #move towards obstacle and bump into it.
                 bumped = self.BumpIntoObstacle(obstacle_x,obstacle_y)
 
-                #bumped into object
+                    #bumped into object
                 if bumped == True:
-                    print("moving backwards....")
-                    
                     self.moveBackwards(15, False)
                     
                 return bumped
@@ -1115,7 +1082,6 @@ class Robot:
                 print("moving towads...",x,y)
 
                 b = math.sqrt((self.x-x)*(self.x-x) + (self.y-y)*(self.y-y))
-                #b = b - 2
 
                 #move a slightly greter distance in order to bump into the obstacle.    
                 
@@ -1151,7 +1117,6 @@ class Robot:
                        # self.moveForwards(b)
                         #b = 0
 
-                # Turn off MCL when bumping into obstacle.
                 bumped = self.moveForwards(b, False)    
                 return bumped
 
@@ -1166,7 +1131,8 @@ robot = Robot()
 
 #robot.rotateSonar(90)       
 robot.findObstacles()
-
+#robot.moveBackwards(15, False)
+#robot.moveBackwards(15, False)
 #robot.moveForwardsWithScanning(100)
         
 

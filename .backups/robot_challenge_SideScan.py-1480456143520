@@ -720,7 +720,7 @@ class Robot:
         #vrticla distance to wall y = 168 ,we move 15 less than that 
         distance = (168-15) - self.y
         #self.rotateRight(90)
-        #self.navigateToWaypoint(self.x,self.y+1)
+        self.navigateToWaypoint(self.x,self.y+1)
             
         #rotate sonar to face left
         self.rotateSonar(-90)
@@ -731,7 +731,6 @@ class Robot:
             print("incrementing hitCount....")
 
             hitCount += 1
-            print("hit count = ",hitCount)
 
         # Imp - need to decide what to do in this case. Not so obvious
         # Best strategy is to have a specific case for each Area A,B and C
@@ -775,7 +774,6 @@ class Robot:
             print("incrementing hitCount....")
 
             hitCount += 1
-            print("hit count = ",hitCount)
 
             # Imp - need to decide what to do in this case. Not so obvious
             # Best strategy is to have a specific case for each Area A,B and C
@@ -810,7 +808,6 @@ class Robot:
         if(objectFound == True):
             print("incrementing hitCount....")
             hitCount += 1
-            print("hit count = ",hitCount)
 
         # Imp - need to decide what to do in this case. Not so obvious
         # Best strategy is to have a specific case for each Area A,B and C

@@ -40,7 +40,7 @@ class Particle:
 		#print("g = " + str(g))
 		g = random.gauss(0, math.sqrt(float(abs(angle))/90.0))
 		self.theta = self.theta + angle  + g
-		print "angle = " + str(angle)
+		#print "angle = " + str(angle)
 		#if self.theta < 0:
 		#	self.theta += 360
 		#else:
