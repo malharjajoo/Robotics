@@ -2,7 +2,7 @@ import sys
 
 class CircularBuffer:
 	
-	def __init__(self,maxSize = 5):
+	def __init__(self,maxSize = 15):
 		self.circularBuffer = [0]* maxSize
 		self.maxSize = maxSize
 		

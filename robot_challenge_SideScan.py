@@ -15,7 +15,7 @@ interface = None
 class Robot:
     # attributes - ideally different components (motors, ultrasonic sensor, etc)
     motors = [0,1]
-    sonar_motor_port = [3,0]
+    sonar_motor_port = [3,2]
 
     touch_ports = [0,1]
 
@@ -42,7 +42,7 @@ class Robot:
         interface.motorEnable(self.motors[0])
         interface.motorEnable(self.motors[1])
         interface.motorEnable(self.sonar_motor_port[0])
-        #interface.motorEnable(self.sonar_motor_port[1]) # not used
+        interface.motorEnable(self.sonar_motor_port[1]) # not used
 
         interface.sensorEnable(self.touch_ports[0], brickpi.SensorType.SENSOR_TOUCH)
         interface.sensorEnable(self.touch_ports[1], brickpi.SensorType.SENSOR_TOUCH)
@@ -63,7 +63,7 @@ class Robot:
         interface.setMotorAngleControllerParameters(self.motors[0],motorParams)
         interface.setMotorAngleControllerParameters(self.motors[1],motorParams)
         interface.setMotorAngleControllerParameters(self.sonar_motor_port[0],motorParams)     
-        #interface.setMotorAngleControllerParameters(self.sonar_motor_port[1],motorParams)  #not used
+        interface.setMotorAngleControllerParameters(self.sonar_motor_port[1],motorParams)  #not used
 
         
         #calculate sonar starting angle
@@ -71,10 +71,12 @@ class Robot:
         
         self.createParticlesList()
         
+        print("starting sonar angle = " + str(sonarStartingAngle))
+        
     
         #temp draw debug, remove after
         #self.printParticles()
-       # time.sleep(0.5)
+        #time.sleep(0.5)
         #self.updatePosition(160,0)
         #self.updatePosition(0,90)
         #self.updatePosition(34,0)
@@ -89,19 +91,19 @@ class Robot:
 
 
     # movement functions
-    def moveForwards(self, distance=-1):
+    def moveForwards(self, distance=-1, usingMCL = True):
 
-	bumped = False
+        bumped = False
 
         if distance<0:
             self.setMotorRotationSpeed(self.speed, self.speed)
             while True:
 
                 if self.checkSensors(self.touch_ports[0]) and not  self.checkSensors(self.touch_ports[1]):    
-                   self.reverseForkRight(90)
-                   # self.setMotorRotationSpeed(self.speed, self.speed)
-		   bumped = True 
-		   return bumped 		
+                    self.reverseForkRight(90)
+                    # self.setMotorRotationSpeed(self.speed, self.speed)
+                    bumped = True 
+                    return bumped         
                 
 
                 elif not self.checkSensors(self.touch_ports[0]) and self.checkSensors(self.touch_ports[1]):
@@ -120,11 +122,21 @@ class Robot:
 
         else:
             angle = self.distToAngle(distance)
-            self.increaseMotorAngle(angle, angle)
-            self.updatePosition(distance, 0)
-	    return False
+            startAngle = interface.getMotorAngles(self.motors)[0][0]
+            bumped = self.increaseMotorAngle(angle, angle)
+            if bumped:
+                motorAngles = interface.getMotorAngles(self.motors)[0][0]
+                angleDiff = float(motorAngles-startAngle)
+                distanceTravelled = (float(angleDiff)/float(angle)) * distance
+            else:
+                distanceTravelled = distance
+            self.updatePosition(distanceTravelled, 0, usingMCL)
+            
+            
+            
+        return bumped
 
-    def moveBackwards(self, distance=-1):
+    def moveBackwards(self, distance=-1, usingMCL = True):
         if distance<0:
             self.setMotorRotationSpeed(-self.speed, -self.speed)
             while True:
@@ -132,8 +144,8 @@ class Robot:
                 time.sleep(1)    
         else:
             angle = self.distToAngle(-distance)
-            self.increaseMotorAngle(angle, angle)
-            self.updatePosition(-distance, 0)
+            self.increaseMotorAngle(angle, angle, False)
+            self.updatePosition(-distance, 0, usingMCL)
 
     def rotateRight(self, rotAngle):
         print("NOW ROTATING RIGHT")
@@ -210,12 +222,16 @@ class Robot:
             self.rotateLeft(90)
 
 
-    # conversion functions
+    #-============================================================ conversion functions
     def distToAngle(self, dist):
         #41.5 - w/ wheels
         #41 with bumper
         angle = float(dist * 15.0)/40 
         return angle
+    
+    def angleToDist(self, angle):
+        dist = float(angle * 40.0)/15
+        return dist
     
     def rotAngleToMotorAngle(self, rotationAngle):
         #4.55 - w/ wheels
@@ -254,7 +270,7 @@ class Robot:
         interface.setMotorRotationSpeedReferences(self.sonar_motor_port, [speed, 0])
 
     #wrapper for motor rotation
-    def increaseMotorAngle(self, angle1, angle2):
+    def increaseMotorAngle(self, angle1, angle2, checkSensors = True):
         motorParams = interface.MotorAngleControllerParameters()
         motorParams.maxRotationAcceleration = 6.0
         motorParams.maxRotationSpeed = 12.0
@@ -272,30 +288,32 @@ class Robot:
         interface.increaseMotorAngleReferences(self.motors,[angle1,angle2])
 
         while not interface.motorAngleReferencesReached(self.motors) :
-            if self.checkSensors(self.touch_ports[0]) or self.checkSensors(self.touch_ports[1]):
-                
-                
-                break
+            if checkSensors == True and (self.checkSensors(self.touch_ports[0]) or self.checkSensors(self.touch_ports[1])):
+                bumped = True 
+                interface.setMotorPwm(self.motors[0],0)
+                interface.setMotorPwm(self.motors[1],0)
+                return bumped       
             else:
                 motorAngles = interface.getMotorAngles(self.motors)
+                
 #position control for sonar
     def increaseMotorSonarAngle(self, angle):
         motorParams = interface.MotorAngleControllerParameters()
-        motorParams.maxRotationAcceleration = 2.0
-        motorParams.maxRotationSpeed = 4.0
+        motorParams.maxRotationAcceleration = 4.0
+        motorParams.maxRotationSpeed = 12.0
         motorParams.feedForwardGain = 255/20.0
-        motorParams.minPWM = 8.0
+        motorParams.minPWM = 1.0
         motorParams.pidParameters.minOutput = -255
         motorParams.pidParameters.maxOutput = 255
-        #517 , 1000,13        
-        motorParams.pidParameters.k_p = 517
-        motorParams.pidParameters.k_i = 1000
-        motorParams.pidParameters.k_d = 13
+        motorParams.pidParameters.k_p = 100
+        motorParams.pidParameters.k_i = 0
+        motorParams.pidParameters.k_d = 0
+        
         interface.setMotorAngleControllerParameters(self.sonar_motor_port[0],motorParams)
-
-        while not interface.motorAngleReferencesReached(self.sonar_motor_port) :
-                motorAngles = interface.getMotorAngles(self.sonar_motor_port)
-
+        interface.setMotorAngleControllerParameters(self.sonar_motor_port[1],motorParams)
+        
+        interface.increaseMotorAngleReferences(self.sonar_motor_port,[angle,0])
+        time.sleep(1.5)
 
     #Sensor Functions
     def checkSensors(self, touch_port):
@@ -313,7 +331,7 @@ class Robot:
         return usReading[0]
         #if usReading:
             #print(usReading)
-       # else:
+        #else:
             #print "Failed to get Sonar reading."
         circularBuffer.add(usReading[0])
         
@@ -351,7 +369,6 @@ class Robot:
 
             if (newAngle>=-180) and (newAngle<0):
                 self.rotateRight(abs(newAngle))
-                
 
             elif (newAngle<180) and (newAngle>=0):
                 self.rotateLeft(newAngle)
@@ -368,9 +385,16 @@ class Robot:
                    # b = b-20
                     #self.moveForwards(20)
                 #else :
-                   # self.moveForwards(b)
+                    #self.moveForwards(b)
                     #b = 0
-            self.moveForwards(b)
+            #LOOP NEW
+            while b != 0:
+                if b > 20:
+                    self.moveForwards(20)
+                    b -= 20
+                else:
+                    self.moveForwards(b)
+                    b -= b
 
 
     # Particle Functions
@@ -420,9 +444,10 @@ class Robot:
 
     #Positioning Functions
 
-    def updatePosition(self, distance, angle):
+    def updatePosition(self, distance, angle, usingMCL = True):
         self.updateParticlePositions(distance, angle)
-        self.updateWeights()
+        if usingMCL == True:
+            self.updateWeights()
         self.printParticles()
         x_sum = 0
         y_sum = 0
@@ -501,7 +526,7 @@ class Robot:
             return -1
 
     def updateWeights(self):
-        for i in range(5):
+        for i in range(15):
             z = self.readUsSensor(self.usSensorBuffer)
         error_count = 0
         particles_list_copy = copy.deepcopy(self.particles_list)
@@ -582,7 +607,7 @@ class Robot:
         
         ls = LocationSignature.LocationSignature(360)
         self.characterize_location(ls)
-       
+        
         
         free_index = self.signatureContainer.get_free_index()
         if(free_index == -1):
@@ -671,54 +696,445 @@ class Robot:
 # ===============================SideWall Algorithm==========================
 
 
-    def MoveForwardsWithScanning(self, distance, expectedDistance):
-    #returns true if hit bottle,
-    #returns result of BumpNavigateToWaypoint
-    #returns false if reached end
-        angle = self.distToAngle(distance)
-        #set motor params
-        interface.setMotorAngleControllerParameters(self.motors[0],motorParams)
+# Start Reading Here
+
+# As of now this function only deals with Area C
+# outermost function
+    def findObstacles(self):
+
+        print("Findgin obstacle...")
+        hitCount = 0 
+
+    #============== Area C =========================
+
+        # preparation for area C
+        self.navigateToWaypoint(60,30)
+        
+
+        #vrticla distance to wall = 168 ,we move 10 less than that 
+        distance = (168-15) - self.y
+        #self.rotateRight(90)
+        self.navigateToWaypoint(self.x,self.y+1)
+            
+        #rotate sonar to face right
+        self.rotateSonar(-90)
+        objectFound = self.moveForwardsWithScanning(distance)
+
+        # either bumped into it while scanning or found it and then bumped into it.
+        if(objectFound == True):
+            print("incrementing hitCount....")
+
+            hitCount += 1
+
+        # Imp - need to decide what to do in this case. Not so obvious
+        # Best strategy is to have a specific case for each Area A,B and C
+        else:
+            print("No object found in the side scan!")
+            #navigateToWaypoint(a,b)
+            
+            
+    #===================================================
+
+        #== Area B #=====
+        # preparation for area B
+        # Need to be careful with bumping into wall c in MCL map
+
+        # 126 is the vertical location of point C in MCL map
+        if(self.y > 126 ):
+                self.navigateToWaypoint(self.x,30)
+                self.navigateToWaypoint(100,94)
+
+        else:
+            self.navigateToWaypoint(100,94)
+        
+        print "waypoint B reached"
+            
+        #while abs(self.theta - 90) > 2:
+            #self.rotateLeft(90-self.theta)
+            
+        self.navigateToWaypoint(self.x,self.y+1)
+        print "rotation adjustment complete"
+        
+        #vertical distance to wall d on mcl map
+        distance = (210-15) - self.y
+
+        #rotate sonar to face right
+        self.rotateSonar(90)
+        print "sonar in position"
+        objectFound = self.moveForwardsWithScanning(distance)
+
+        # either bumped into it while scanning or found it and then bumped into it.
+        if(objectFound == True):
+            print("incrementing hitCount....")
+
+            hitCount += 1
+
+            # Imp - need to decide what to do in this case. Not so obvious
+            # Best strategy is to have a specific case for each Area A,B and C
+        else:
+            print("No object found in the side scan!")
+            #navigateToWaypoint(a,b)
+
+
+
+    #============== Area A =========================
+
+            # preparation for area A
+        self.navigateToWaypoint(90,15)
+        #shortcut to turn it straight , facing towards wall d
+        # (instead of finding orientation of robot to turn it straight)
+        self.navigateToWayPoint(self.x,y+1)
+
+        #vrticla distance to wall f = 84 ,we move 10 less than that 
+        distance = (84-15) - self.y
+
+        self.rotateSonar(90)
+        objectFound = self.moveForwardsWithScanning(distance)
+
+        # either bumped into it while scanning or found it and then bumped into it.
+        if(objectFound == True):
+            print("incrementing hitCount....")
+            hitCount += 1
+
+        # Imp - need to decide what to do in this case. Not so obvious
+        # Best strategy is to have a specific case for each Area A,B and C
+        else:
+            print("No object found in the side scan!")
+            #navigateToWaypoint(a,b)
+    #===================================================
+
+        if(hitCount == 3):
+            self.navigateToWayPoint(84,30)
+            print("Challeneg Completed")
+        else:
+            self.findObstacles()
+
+
+
+
+        # this function is called until all 3 objects have not been hit once.
+    def moveForwardsWithScanning(self, distance):
+            #returns true if hit bottle,
+            #returns result of Bump
+            #returns false if reached end
+            angle = self.distToAngle(distance)
+            
+            
+            motorParams = interface.MotorAngleControllerParameters()
+            motorParams.maxRotationAcceleration = 6.0
+            motorParams.maxRotationSpeed = 12.0
+            motorParams.feedForwardGain = 255/20.0
+            motorParams.minPWM = 8.0
+            motorParams.pidParameters.minOutput = -255
+            motorParams.pidParameters.maxOutput = 255
+            #position ctrl: 517, 1000, 13
+            #velocity ctrl: 100, 0, 0
+            motorParams.pidParameters.k_p = 517
+            motorParams.pidParameters.k_i = 1000
+            motorParams.pidParameters.k_d = 13
+
+            #set motor params
+            interface.setMotorAngleControllerParameters(self.motors[0],motorParams)
             interface.setMotorAngleControllerParameters(self.motors[1],motorParams)
-        interface.increaseMotorAngleReferences(self.motors,[angle1,angle2])
-        startAngle = interface.getMotorAngles(self.motors)[0][0]
-        #Before setting off, take five values of the sonar to the wall to get a good median
-        for i in range(5):
-            usReading = readUsSensor(self.usSensorBuffer):
-        while not interface.motorAngleReferencesReached(self.motors) :
+            
+            print("ANGLE=",angle)
+            
+            interface.increaseMotorAngleReferences(self.motors,[angle,angle])
+            
+            
+            startAngle = interface.getMotorAngles(self.motors)[0][0]
+            medianBuffer = CircularBuffer.CircularBuffer(50)
+            
+            #set flags for the beginning and end of the bottle
+            angle_beginning = -1;   #start of bottle
+            angle_end = -1; #end of bottle
+            bottle_start = False
+            bottle_end = False
+            y_begin = 0
+            y_end = 0
+            y_mid = 0
+
+            #Before setting off, take five values of the sonar to the wall to get a good median
+            for i in range(50):
+                medianBuffer.add([self.readUsSensor(self.usSensorBuffer), self.y])
+
+            wallDistance  = self.readUsSensor(self.usSensorBuffer)
+            
+            
+            while not interface.motorAngleReferencesReached(self.motors) :
+                
+                    #print("moving forwards with scanning ...")
+
+                    #bumped into the obstacle accidentally while moving straight.
                     if self.checkSensors(self.touch_ports[0]) or self.checkSensors(self.touch_ports[1]):
-                motorAngles = interface.getMotorAngles(self.motors)[0][0]
-                angleDiff = float(motorAngle-startAngle)
-                distanceTravelled = (angleDiff/float(angle)) * distance
-                hitCount += 1
-                self.updatePosition(distanceTravelled, 0)
-                self.setSonarAngle
-                return true	//hit bottle
-            else:
-                usReading = readUsSensor(self.usSensorBuffer)
-                if abs(usReading - expectedDistance) > 8:
+                        motorAngles = interface.getMotorAngles(self.motors)[0][0]
+                        angleDiff = float(motorAngles-startAngle)
+                        distanceTravelled = (float(angleDiff)/float(angle)) * distance
+
+
+                        #stop motors
+                        interface.setMotorPwm(self.motors[0],0)
+                        interface.setMotorPwm(self.motors[1],0)
+
+                        # need to rotate sonar to point forward for MCl to work
+                        currentSonarAngle = interface.getMotorAngles(self.sonar_motor_port)[0][0]
+
+                        if(currentSonarAngle > self.sonarStartingAngle):
+                            self.rotateSonar(-90)
+                        else:
+                            self.rotateSonar(90)
+
+                        # orientation of robot will not have changed since we moved straight only.
+                        self.updatePosition(distanceTravelled, 0, False)
+                        
+                        self.moveBackwards(15, False)
+
+                        return True #hit bottle
+
+                    else:    #check sonar
+
+                        bumped = False
+                        currentAngle = interface.getMotorAngles(self.motors)[0][0]
+                        usReading = self.readUsSensor(self.usSensorBuffer)
+                        medianBuffer.add([usReading, currentAngle])
+                        #calculate gradient
+                        #print(medianBuffer.circularBuffer)
+                        gradient = medianBuffer.circularBuffer[-1][0] - medianBuffer.circularBuffer[-2][0]
+                        
+                        
+                        if gradient < -4 and angle_beginning == -1:    #-ve gradient => entering bottle
+                            print("entered bottle frame")
+                            bottle_start = True
+                            angle_beginning = medianBuffer.circularBuffer[-1][1]
+
+                        elif gradient > 4 and angle_beginning != -1: #+ve gradient => exiting 
+                            #check if current y and beginning y distance is sensible (> 5 cm apart)
+                            y_begin = self.angleToDist(angle_beginning)
+                            if abs(y_begin - medianBuffer.circularBuffer[-1][1]) >= 5:
+                                print("exited bottle frame")
+                                angle_end = medianBuffer.circularBuffer[-1][1]
+                                y_end = self.angleToDist(angle_end)
+                                bottle_end = True
+
+                        #if abs(usReading - wallDistance) > 8:   
+                        if(abs(gradient) <= 4 and bottle_start == True and bottle_end == True):
+                            y_mid = float(y_begin + y_end)/2
+                            print ("y begin = "+ str(y_begin))
+                            print ("y end = "+ str(y_end))
+                            print ("y mid = "+ str(y_mid))
+                            min_x = medianBuffer.circularBuffer[0][0]
+                            for i in range(len(medianBuffer.circularBuffer)):
+                                if min_x > medianBuffer.circularBuffer[i][0]:
+                                    min_x =  medianBuffer.circularBuffer[i][0]
+
+                            #obstacle_motor_angle = float(angle_beginning + angle_end)/2.0      
+        
+
+
+                            
+                            obstacle_x = 0 
+                            obstacle_y = 0
+                            
+                            print("Found Obstacle!")
+                            motorAngles = interface.getMotorAngles(self.motors)[0][0]
+                            angleDiff = float(motorAngles-startAngle)
+                            distanceTravelled = (float(angleDiff)/float(angle)) * distance
+                            #stop motors
+                            interface.setMotorPwm(self.motors[0],0)
+                            interface.setMotorPwm(self.motors[1],0)
                     
+                    
+                            currentSonarAngle = interface.getMotorAngles(self.sonar_motor_port)[0][0]
+                            # Major assumption - Increasing angles causes sonar to rotate left
+                            # need to rotate sonar to point forward for MCL to work
+                            
+                            
+                            if(currentSonarAngle < self.sonarStartingAngle ):
+
+                                print("Rotating sonar right")
+                                self.rotateSonar(90)
+                                print("finished rotating")
+                                #Again , like above , we have moved only vertically
+                                self.updatePosition(distanceTravelled, 0)
+                                
+                                #print("US READING ",usReading)
+                                obstacle_x = self.x - min_x
+                                
+                                #print("OBSTACL_X = ",obstacle_x)
+                                obstacle_y = self.y
+
+                            else:
+                                
+                                print("Rotating sonar left")
+                                self.rotateSonar(-90)
+                                 #Again , like above , we have moved only vertically
+                                self.updatePosition(distanceTravelled, 0)
+                                
+                                obstacle_x = self.x + min_x
+                                #print("PBSTACL_X = ",obstacle_x)
+                                obstacle_y = self.y
+                                
+                            self.moveBackwards(y_end - y_mid, False)
+                            bumped = self.BumpIntoObstacle(obstacle_x,obstacle_y)
+                                    
+                            #bumped into object
+                            if bumped == True:
+                                 #stop motors
+                                self.moveBackwards(15, False)
+                                
+                            return bumped
+                            
 
 
-    def setSonarAngle(self, angle): #angle is 0-360, 0 degrees facing forwards
+            #----------------------------------------------------------------------------                
+            # readched the end of the wall but did not find the object.
+            
+            if angle_beginning != -1:    #we entered the bottle but finished navigating
+                
+                min_x = medianBuffer.circularBuffer[0][0]
+                for i in range(len(medianBuffer.circularBuffer)):
+                    if min_x > medianBuffer.circularBuffer[i][0]:
+                        min_x =  medianBuffer.circularBuffer[i][0]
+
+                    #obstacle_motor_angle = float(angle_beginning + angle_end)/2.0      
+
+
+
+
+                obstacle_x = 0 
+                obstacle_y = 0
+
+                print("Possibly Found Obstacle! at edge")
+                motorAngles = interface.getMotorAngles(self.motors)[0][0]
+                angleDiff = float(motorAngles-startAngle)
+                distanceTravelled = (float(angleDiff)/float(angle)) * distance
+                #stop motors
+                interface.setMotorPwm(self.motors[0],0)
+                interface.setMotorPwm(self.motors[1],0)
+                    
+                    
+                currentSonarAngle = interface.getMotorAngles(self.sonar_motor_port)[0][0]
+                # Major assumption - Increasing angles causes sonar to rotate left
+                # need to rotate sonar to point forward for MCL to work
+
+                            
+                if(currentSonarAngle < self.sonarStartingAngle ):
+
+                    print("Rotating sonar right")
+                    self.rotateSonar(90)
+                    #Again , like above , we have moved only vertically
+                    self.updatePosition(distanceTravelled, 0)
+
+                    #print("US READING ",usReading)
+                    obstacle_x = self.x - min_x
+
+                    #print("OBSTACL_X = ",obstacle_x)
+                    obstacle_y = self.y
+
+                else:
+
+                    print("Rotating sonar left")
+                    self.rotateSonar(-90)
+                    #Again , like above , we have moved only vertically
+                    self.updatePosition(distanceTravelled, 0)
+
+                    obstacle_x = self.x + min_x
+                    #print("PBSTACL_X = ",obstacle_x)
+                    obstacle_y = self.y
+
+                bumped = self.BumpIntoObstacle(obstacle_x,obstacle_y)
+
+                    #bumped into object
+                if bumped == True:
+                    self.moveBackwards(15, False)
+                    
+                return bumped
+            
+            
+            #--------------------------------------------------------------------------
+            self.updatePosition(distance, 0)
+
+            return False
+
+
+
+
+    # use position control for rotating sonar.
+    # Calibrated it now.
+    # sonar motor port = 3        
+    def rotateSonar(self,angle):   
+            #soar_motor_port = [3,0]
+
+            angle = self.rotAngleToSonarMotorAngle(angle)
+            self.increaseMotorSonarAngle(angle)
+
+                
+    # calibration 
+    def rotAngleToSonarMotorAngle(self,angle):
+            motorAngle = float(angle*1.9)/90
+            return motorAngle
+        
+        
+    # input - obstacle coordiantes
+    def BumpIntoObstacle(self,x,y):
+        
+                
+                print("moving towads...",x,y)
+
+                b = math.sqrt((self.x-x)*(self.x-x) + (self.y-y)*(self.y-y))
+
+                #move a slightly greter distance in order to bump into the obstacle.    
+                
+
+                #while b > 0:
+                new_x=x-self.x
+                new_y=y-self.y
+                rel_angle=math.degrees(math.atan2(float(new_y), float(new_x)))
+                theta=self.theta%360
+                newAngle=rel_angle-theta
+                #ADJUSTMENT NEW
+                #newAngle += 10
+
+                if (newAngle>=-180) and (newAngle<0):
+                    self.rotateRight(abs(newAngle))
+
+
+                elif (newAngle<180) and (newAngle>=0):
+                    self.rotateLeft(newAngle)
+
+
+                elif (newAngle>=180) and (newAngle<360):
+                    self.rotateRight(360-newAngle)
+
+
+                elif (newAngle<-180) and (newAngle>-360):
+                    self.rotateLeft(360+newAngle)
+
+                    #if b > 20:
+                       # b = b-20
+                        #self.moveForwards(20)
+                    #else :
+                       # self.moveForwards(b)
+                        #b = 0
+
+                bumped = self.moveForwards(b, False)    
+                return bumped
+
+
 
 # ===============================End of Robot Class =================
 
 # main
 robot = Robot()
 
-#robot.moveForwards(10)
-
-#robot.readWayPoints("waypoints.txt")
-
-#for i in range(0,4):
-
-##    robot.rotateRight(90)
-#robot.signatureContainer.delete_loc_files()
 
 
-        
+#robot.rotateSonar(90)       
 robot.findObstacles()
+#robot.moveBackwards(15, False)
+#robot.moveBackwards(15, False)
+#robot.moveForwardsWithScanning(100)
         
 
 interface.terminate()
-	#END
+    #END
