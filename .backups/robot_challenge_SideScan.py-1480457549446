@@ -1010,7 +1010,6 @@ class Robot:
                             if bumped == True:
                                  #stop motors
                                 self.moveBackwards(15, False)
-                               # self.rotateRight(90,False)
                                 
                             return bumped
                             

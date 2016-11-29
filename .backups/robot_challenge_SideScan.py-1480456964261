@@ -147,17 +147,17 @@ class Robot:
             self.increaseMotorAngle(angle, angle, False)
             self.updatePosition(-distance, 0, usingMCL)
 
-    def rotateRight(self, rotAngle,usingMCL = True):
+    def rotateRight(self, rotAngle):
         print("NOW ROTATING RIGHT")
         angle = self.rotAngleToMotorAngle(rotAngle)
         self.increaseMotorAngle(angle, -angle)
-        self.updatePosition(0,-rotAngle,usingMCL)
+        self.updatePosition(0,-rotAngle)
 
-    def rotateLeft(self, rotAngle,usingMCL = True):
+    def rotateLeft(self, rotAngle):
         print ("NOW ROTATING LEFT")
         angle = self.rotAngleToMotorAngle(rotAngle)
         self.increaseMotorAngle(-angle, angle)
-        self.updatePosition(0, rotAngle,usingMCL)
+        self.updatePosition(0, rotAngle)
 
     
     def reverseForkLeft(self,angle):
@@ -392,9 +392,9 @@ class Robot:
                  
                 if b > 20:
                     b = b-20
-                    self.moveForwards(20)
+                    self.moveForwards(20,True)
                 else:
-                    self.moveForwards(b)
+                    self.moveForwards(b,True)
                     b = 0
 
 
@@ -773,6 +773,7 @@ class Robot:
         # either bumped into it while scanning or found it and then bumped into it.
         if(objectFound == True):
             print("incrementing hitCount....")
+
             hitCount += 1
             print("hit count = ",hitCount)
 
@@ -1010,7 +1011,6 @@ class Robot:
                             if bumped == True:
                                  #stop motors
                                 self.moveBackwards(15, False)
-                               # self.rotateRight(90,False)
                                 
                             return bumped
                             
